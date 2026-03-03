@@ -121,7 +121,7 @@ def handle_smart_patch(ctx: Dict[str, Any]) -> str:
     name = ctx["func_name"] or f"sub_{ctx['ea']:x}"
     ea = ctx["func_ea"] or ctx["ea"]
     return (
-        f"/smart-patch Patch function {name} at 0x{ea:x}.\n"
+        f"/smart-patch-binja Patch function {name} at 0x{ea:x}.\n"
         f"Desired behavior: "
     )
 

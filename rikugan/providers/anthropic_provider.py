@@ -421,6 +421,15 @@ class AnthropicProvider(LLMProvider):
                         sr = getattr(event, "delta", None)
                         if sr and hasattr(sr, "stop_reason"):
                             yield StreamChunk(finish_reason=sr.stop_reason)
+                        # Capture final output_tokens from message_delta usage
+                        usage_delta = getattr(event, "usage", None)
+                        if usage_delta is not None:
+                            output_tokens = getattr(usage_delta, "output_tokens", 0) or 0
+                            if output_tokens > 0:
+                                yield StreamChunk(usage=TokenUsage(
+                                    prompt_tokens=0,
+                                    completion_tokens=output_tokens,
+                                ))
 
                     elif etype == "message_start":
                         msg = event.message
