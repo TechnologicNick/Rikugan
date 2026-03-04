@@ -5,10 +5,15 @@ from __future__ import annotations
 import functools
 import inspect
 import json
+import typing
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional, get_type_hints
 
+import traceback
+
 from ..core.errors import ToolError, ToolValidationError
+from ..core.logging import log_error as _log_error, log_trace
+from ..core.thread_safety import idasync
 
 
 def parse_addr(value: Any) -> int:
@@ -100,8 +105,6 @@ def _extract_annotation_metadata(annotation: Any) -> Dict[str, Any]:
 
 def _resolve_type(annotation: Any) -> tuple:
     """Resolve a type annotation to (json_type, extra_schema_props, base_type)."""
-    import typing
-
     origin = getattr(annotation, "__origin__", None)
     args = getattr(annotation, "__args__", ())
 
@@ -137,8 +140,6 @@ def _resolve_type(annotation: Any) -> tuple:
 
 def _build_parameters(func: Callable) -> List[ParameterSchema]:
     """Build parameter schemas from function signature and type hints."""
-    import typing
-
     sig = inspect.signature(func)
     hints = get_type_hints(func, include_extras=True)
     params: List[ParameterSchema] = []
@@ -197,8 +198,6 @@ def tool(
             ...
     """
     def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
-        from ..core.thread_safety import idasync
-
         tool_name = name or func.__name__
         tool_desc = description or (func.__doc__ or "").strip().split("\n")[0]
         params = _build_parameters(func)
@@ -221,9 +220,6 @@ def tool(
 
         @functools.wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
-            # Deferred import: logging.py imports are deferred to avoid
-            # circular imports during module loading (tools → logging → tools).
-            from ..core.logging import log_trace, log_error as _log_error
             log_trace(f"tool:{tool_name} CALL args={kwargs}")
             try:
                 result = safe_func(*args, **kwargs)
@@ -232,7 +228,6 @@ def tool(
             except ToolError:
                 raise
             except Exception as e:
-                import traceback
                 _log_error(f"tool:{tool_name} EXCEPTION: {e}\n{traceback.format_exc()}")
                 raise ToolError(str(e), tool_name=tool_name) from e
 

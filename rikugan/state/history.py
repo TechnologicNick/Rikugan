@@ -13,6 +13,7 @@ from typing import Any, Dict, List, Optional
 from ..constants import SESSION_SCHEMA_VERSION
 from ..core.config import RikuganConfig
 from ..core.logging import log_debug
+from ..core.types import Message
 from .session import SessionState
 
 
@@ -65,7 +66,6 @@ class SessionHistory:
         except (json.JSONDecodeError, OSError) as exc:
             log_debug(f"Failed to load session {session_id}: {exc}")
             return None
-        from ..core.types import Message
         session = SessionState(
             id=data["id"],
             created_at=data.get("created_at", 0),

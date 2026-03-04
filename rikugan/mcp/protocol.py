@@ -6,6 +6,9 @@ import json
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
+# JSON-RPC 2.0 standard error codes
+_JSONRPC_PARSE_ERROR = -32700
+
 
 @dataclass
 class MCPToolSchema:
@@ -36,7 +39,7 @@ def decode_jsonrpc_response(data: str) -> Dict[str, Any]:
     try:
         return json.loads(data)
     except json.JSONDecodeError:
-        return {"error": {"code": -32700, "message": f"Parse error: {data[:200]}"}}
+        return {"error": {"code": _JSONRPC_PARSE_ERROR, "message": f"Parse error: {data[:200]}"}}
 
 
 def parse_content_length_frame(stream) -> Optional[str]:

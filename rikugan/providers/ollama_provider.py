@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import json
 import os
+import urllib.request
 from typing import Any, Dict, List, Tuple
 
 from ..core.logging import log_debug
@@ -46,8 +48,6 @@ class OllamaProvider(OpenAICompatProvider):
     def list_models(self) -> List[ModelInfo]:
         """Try to list models from the Ollama API."""
         try:
-            import urllib.request
-            import json
             base = self.api_base.removesuffix("/v1").rstrip("/")
             url = f"{base}/api/tags"
             with urllib.request.urlopen(url, timeout=5) as resp:

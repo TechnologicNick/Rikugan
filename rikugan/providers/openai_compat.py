@@ -6,6 +6,7 @@ import importlib
 import os
 from typing import Any, Dict, List, Optional
 
+from ..core.errors import ProviderError
 from ..core.logging import log_debug
 from ..core.types import ModelInfo, ProviderCapabilities
 from .openai_provider import OpenAIProvider
@@ -31,7 +32,6 @@ class OpenAICompatProvider(OpenAIProvider):
             try:
                 openai = importlib.import_module("openai")
             except ImportError:
-                from ..core.errors import ProviderError
                 raise ProviderError(
                     "openai package not installed. Run: pip install openai",
                     provider=self._provider_name,

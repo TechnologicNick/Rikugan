@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 from typing import Dict, List, Optional, Tuple
 
+from ..core.config import RikuganConfig
 from ..core.logging import log_debug, log_info
 from .loader import SkillDefinition, discover_skills
 
@@ -21,7 +22,6 @@ class SkillRegistry:
 
     def __init__(self, skills_dir: str = ""):
         if not skills_dir:
-            from ..core.config import RikuganConfig
             skills_dir = RikuganConfig().skills_dir
         self._skills_dir = skills_dir
         self._skills: Dict[str, SkillDefinition] = {}

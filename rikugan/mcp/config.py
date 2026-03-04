@@ -7,6 +7,7 @@ import os
 from dataclasses import dataclass, field
 from typing import Dict, List
 
+from ..core.config import RikuganConfig
 from ..core.errors import MCPError
 from ..core.logging import log_debug, log_error
 
@@ -31,7 +32,6 @@ def load_mcp_config(path: str = "") -> List[MCPServerConfig]:
     Returns an empty list if the file doesn't exist (graceful no-op).
     """
     if not path:
-        from ..core.config import RikuganConfig
         path = RikuganConfig().mcp_config_path
 
     if not os.path.isfile(path):
@@ -70,7 +70,6 @@ def load_mcp_config(path: str = "") -> List[MCPServerConfig]:
 def save_mcp_config(servers: List[MCPServerConfig], path: str = "") -> None:
     """Save MCP server configurations back to disk."""
     if not path:
-        from ..core.config import RikuganConfig
         path = RikuganConfig().mcp_config_path
 
     servers_dict: Dict[str, dict] = {}

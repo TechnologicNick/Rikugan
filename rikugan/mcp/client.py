@@ -6,6 +6,7 @@ import json
 import os
 import subprocess
 import threading
+import time
 import queue
 from typing import Any, Dict, List, Optional
 
@@ -250,7 +251,6 @@ class MCPClient:
 
     def _heartbeat_loop(self) -> None:
         """Background thread: periodically ping the server to detect dead processes."""
-        import time
         while self._running:
             time.sleep(_HEARTBEAT_INTERVAL)
             if not self._running:
