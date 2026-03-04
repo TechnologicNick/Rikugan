@@ -43,15 +43,14 @@ def _log_file_path() -> str:
 
 
 class _FlushFileHandler(logging.FileHandler):
-    """FileHandler that flushes + fsync after every record."""
+    """FileHandler that flushes after every record for crash safety."""
 
     def emit(self, record: logging.LogRecord) -> None:
         super().emit(record)
         try:
             self.stream.flush()
-            os.fsync(self.stream.fileno())
-        except OSError as e:
-            sys.stderr.write(f"[Rikugan] fsync failed (non-fatal): {e}\n")
+        except OSError:
+            pass
 
 
 class _JSONFormatter(logging.Formatter):
