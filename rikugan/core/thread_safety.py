@@ -5,7 +5,7 @@ from __future__ import annotations
 import functools
 import importlib
 import threading
-from typing import Any, Callable, TypeVar
+from typing import Any, Callable, Optional, TypeVar
 
 F = TypeVar("F", bound=Callable[..., Any])
 
@@ -24,13 +24,26 @@ else:
     bn_mainthread = None
 
 
+_TRACE_ENABLED: Optional[bool] = None
+
+
 def _log(msg: str) -> None:
-    """Low-level log that avoids circular imports with logging.py."""
+    """Low-level log that avoids circular imports with logging.py.
+
+    Skips the call entirely when TRACE-level logging is disabled to avoid
+    the overhead of eager f-string formatting on every idasync dispatch.
+    """
+    global _TRACE_ENABLED
     try:
-        from .logging import log_trace
+        import logging as _logging
+        from .logging import get_logger, log_trace
+        if _TRACE_ENABLED is None:
+            _TRACE_ENABLED = get_logger().isEnabledFor(_logging.DEBUG)
+        if not _TRACE_ENABLED:
+            return
         log_trace(msg)
-    except ImportError as e:
-        import sys; sys.stderr.write(f"[Rikugan] thread_safety._log bootstrap: {e}\n")
+    except ImportError:
+        pass
 
 
 def idasync(func: F) -> F:

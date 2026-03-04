@@ -150,9 +150,13 @@ def log_error(msg: str) -> None:
 
 
 def log_debug(msg: str) -> None:
-    get_logger().debug(msg)
+    logger = get_logger()
+    if logger.isEnabledFor(logging.DEBUG):
+        logger.debug(msg)
 
 
 def log_trace(label: str) -> None:
     """Verbose trace-level log (logged at DEBUG level with TRACE prefix)."""
-    get_logger().debug(f"TRACE {label}")
+    logger = get_logger()
+    if logger.isEnabledFor(logging.DEBUG):
+        logger.debug(f"TRACE {label}")

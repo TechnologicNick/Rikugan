@@ -23,6 +23,7 @@ class ToolRegistry:
 
     def __init__(self) -> None:
         self._tools: Dict[str, ToolDefinition] = {}
+        self._schema_cache: Optional[List[Dict[str, Any]]] = None
 
     @staticmethod
     def _coerce_arguments(defn: ToolDefinition, arguments: Dict[str, Any]) -> Dict[str, Any]:
@@ -67,6 +68,7 @@ class ToolRegistry:
 
     def register(self, defn: ToolDefinition) -> None:
         self._tools[defn.name] = defn
+        self._schema_cache = None  # invalidate
         log_debug(f"Registered tool: {defn.name}")
 
     def register_function(self, func: Callable[..., Any]) -> None:
@@ -92,7 +94,9 @@ class ToolRegistry:
         return list(self._tools.keys())
 
     def to_provider_format(self) -> List[Dict[str, Any]]:
-        return [t.to_provider_format() for t in self._tools.values()]
+        if self._schema_cache is None:
+            self._schema_cache = [t.to_provider_format() for t in self._tools.values()]
+        return self._schema_cache
 
     def execute(self, name: str, arguments: Dict[str, Any]) -> str:
         defn = self._tools.get(name)
