@@ -104,17 +104,49 @@ def _sizeof_type(bv: Any, type_str: str, default: int = 4) -> int:
     return default
 
 
+def _extract_types_dict(res: Any) -> Optional[Dict[str, Any]]:
+    """Extract a ``{name: type}`` dict from whatever ``parse_types_from_*`` returns.
+
+    Returns ``None`` when the format is not recognised so the caller can try
+    the next API variant.
+    """
+    if res is None:
+        return None
+
+    # Legacy BN 3.x: (types_dict, variables, functions) tuple
+    if isinstance(res, tuple) and res:
+        first = res[0]
+        if isinstance(first, dict):
+            return {str(k): v for k, v in first.items()}
+
+    # BN 4.x TypeParserResult: .types is a dict, list of (QualifiedName, Type) pairs,
+    # or list of ParsedTypeInfo objects
+    types_attr = getattr(res, "types", None)
+    if types_attr is None:
+        return None
+    if isinstance(types_attr, dict):
+        return {str(k): v for k, v in types_attr.items()}
+
+    result: Dict[str, Any] = {}
+    for item in types_attr:
+        if isinstance(item, tuple) and len(item) == 2:
+            result[str(item[0])] = item[1]
+        else:
+            iname = getattr(item, "name", None)
+            itype = getattr(item, "type", None)
+            if iname is not None and itype is not None:
+                result[str(iname)] = itype
+    return result
+
+
 def _parse_types_from_source(bv: Any, source: str) -> Dict[str, Any]:
     """Parse C declarations into a {name: type} map.
 
-    Tries the string-input API first (parse_types_from_string), then falls back
-    to the source-file variants for older BN builds.  Handles both the legacy
-    tuple return ``(types_dict, vars, funcs)`` and the BN 4.x
-    ``TypeParserResult`` object whose ``.types`` may be a list of
-    ``(QualifiedName, Type)`` pairs or ``ParsedTypeInfo`` objects.
+    ``parse_types_from_string`` takes a C string and is tried first.
+    ``parse_types_from_source`` takes a filename and is kept only as a
+    last-resort fallback for older BN builds where the string variant may
+    not exist.
     """
-    # parse_types_from_string takes a C string — this is the correct method.
-    # parse_types_from_source takes a filename — only useful as a fallback.
     for meth_name in (
         "parse_types_from_string",
         "parseTypesFromString",
@@ -130,32 +162,10 @@ def _parse_types_from_source(bv: Any, source: str) -> Dict[str, Any]:
             log_debug(f"_parse_types_from_source {meth_name} failed: {e}")
             continue
 
-        # Legacy: (types_dict, variables, functions) tuple
-        if isinstance(res, tuple) and res:
-            maybe_types = res[0]
-            if isinstance(maybe_types, dict):
-                return {str(k): v for k, v in maybe_types.items()}
-
-        # BN 4.x TypeParserResult: .types is a dict, list of pairs, or list of objects
-        types_attr = getattr(res, "types", None)
-        if types_attr is not None:
-            if isinstance(types_attr, dict):
-                return {str(k): v for k, v in types_attr.items()}
-            # List of (QualifiedName, Type) pairs or ParsedTypeInfo objects
-            try:
-                result: Dict[str, Any] = {}
-                for item in types_attr:
-                    if isinstance(item, tuple) and len(item) == 2:
-                        result[str(item[0])] = item[1]
-                    else:
-                        iname = getattr(item, "name", None)
-                        itype = getattr(item, "type", None)
-                        if iname is not None and itype is not None:
-                            result[str(iname)] = itype
-                if result:
-                    return result
-            except Exception as e:
-                log_debug(f"_parse_types_from_source iterate types failed: {e}")
+        parsed = _extract_types_dict(res)
+        if parsed is not None:
+            return parsed
+        log_debug(f"_parse_types_from_source {meth_name} returned unrecognised format: {type(res)}")
 
     raise ToolError("Binary Ninja failed to parse C declarations")
 
