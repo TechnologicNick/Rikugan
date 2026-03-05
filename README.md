@@ -188,8 +188,6 @@ Rikugan has a settings dialog to configure your model of choice. Open Rikugan â†
 
 **Anthropic OAuth:** If you have Claude Code installed and authenticated, Rikugan auto-detects the OAuth token from the macOS Keychain. On other platforms, paste your API key manually or run `claude setup-token`.
 
-
-
 ## Usage
 
 ### Open the panel
