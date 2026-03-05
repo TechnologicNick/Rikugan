@@ -373,7 +373,7 @@ Rikugan supports Anthropic, OpenAI, Google Gemini, MiniMax, Ollama, and any Open
 - GPT-5.2
 
 
-## Conclusion
+# Conclusion
 
 If you'd asked me last year what I thought about AI doing reverse engineering, I'd probably have said something like "Nah, impossible — it hallucinates, and reverse engineering is not something as simple as writing code." But this year I completely changed my mind when I saw what was achievable. AI is not the ChatGPT from 2023 anymore; it's something entirely different.
 
