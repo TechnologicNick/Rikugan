@@ -179,6 +179,7 @@ class RikuganPanelCore(QWidget):
         self._poll_timer: Optional[QTimer] = None
         self._polling = False
         self._pending_answer = False
+        self._awaiting_button_approval = False
         self._is_shutdown = False
         self._ui_hooks_factory = ui_hooks_factory
         self._ui_hooks = None
@@ -597,6 +598,10 @@ class RikuganPanelCore(QWidget):
         chat_view = self._active_chat_view()
         if chat_view is None:
             return
+        # Block free-text when awaiting button-only approval (plan/save).
+        if self._awaiting_button_approval:
+            log_debug(f"Ignoring text input while awaiting button approval: {text!r}")
+            return
         if self._pending_answer:
             self._pending_answer = False
             chat_view.add_user_message(text)
@@ -621,6 +626,8 @@ class RikuganPanelCore(QWidget):
     def _on_cancel(self) -> None:
         if self._is_shutdown:
             return
+        self._pending_answer = False
+        self._awaiting_button_approval = False
         self._ctrl.cancel()
         # Remove [queued] widgets from the active chat view
         chat_view = self._active_chat_view()
@@ -735,6 +742,16 @@ class RikuganPanelCore(QWidget):
         if event.type in (TurnEventType.USER_QUESTION, TurnEventType.SAVE_APPROVAL_REQUEST,
                           TurnEventType.PLAN_GENERATED):
             self._pending_answer = True
+            # Plan approvals, save approvals, and any question with
+            # predefined options MUST be answered via buttons only.
+            # Disable text input so free-text ("continue", "redo", etc.)
+            # cannot bypass the approval gate.
+            has_options = bool(event.metadata.get("options")) if event.metadata else False
+            allow_text = bool(event.metadata.get("allow_text")) if event.metadata else False
+            needs_button = event.type in (TurnEventType.PLAN_GENERATED,
+                                          TurnEventType.SAVE_APPROVAL_REQUEST) or (has_options and not allow_text)
+            if needs_button:
+                self._awaiting_button_approval = True
             self._set_running(False)
         if event.type == TurnEventType.MUTATION_RECORDED:
             self._on_mutation_recorded(event)
@@ -750,6 +767,7 @@ class RikuganPanelCore(QWidget):
         if not self._pending_answer:
             return
         self._pending_answer = False
+        self._awaiting_button_approval = False
         chat_view = self._active_chat_view()
         if chat_view is not None:
             chat_view.add_user_message(answer)
@@ -763,6 +781,11 @@ class RikuganPanelCore(QWidget):
             return
         if self._poll_timer:
             self._poll_timer.stop()
+
+        # Clear approval state — if the agent crashed mid-approval the
+        # buttons are stale and free-text input must be restored.
+        self._pending_answer = False
+        self._awaiting_button_approval = False
 
         self._ctrl.on_agent_finished()
         # Remove any [queued] widgets since the queue was cleared.
@@ -846,18 +869,25 @@ class RikuganPanelCore(QWidget):
         self._start_agent(f"/undo {count}")
 
     def _set_running(self, running: bool) -> None:
-        # Keep input enabled so users can queue follow-up messages while running.
-        self._input_area.set_enabled(True)
-        if running:
+        # Keep input enabled so users can queue follow-up messages while
+        # running — UNLESS we're waiting for a button-only approval.
+        if self._awaiting_button_approval:
+            self._input_area.set_enabled(False)
             self._input_area.setPlaceholderText(
-                "Rikugan is thinking... press Enter (or Queue) to queue a follow-up."
+                "Use the Approve/Reject buttons above to continue."
             )
         else:
-            self._input_area.setPlaceholderText(
-                "Ask about this binary... (/ for skills, /modify to patch)"
-            )
+            self._input_area.set_enabled(True)
+            if running:
+                self._input_area.setPlaceholderText(
+                    "Rikugan is thinking... press Enter (or Queue) to queue a follow-up."
+                )
+            else:
+                self._input_area.setPlaceholderText(
+                    "Ask about this binary... (/ for skills, /modify to patch)"
+                )
 
         self._send_btn.setVisible(True)
-        self._send_btn.setEnabled(True)
+        self._send_btn.setEnabled(not self._awaiting_button_approval)
         self._send_btn.setText("Queue" if running else "Send")
         self._cancel_btn.setVisible(running)

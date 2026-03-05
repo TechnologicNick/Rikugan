@@ -32,6 +32,7 @@ from .exploration_mode import (
     EXECUTE_STEP_PROMPT,
 )
 from .minify import minify_text, minify_messages
+from ..core.sanitize import sanitize_tool_result, sanitize_skill_body
 from ..state.session import SessionState
 
 # Minimum acceptable context window; smaller values get flagged by /doctor.
@@ -403,7 +404,7 @@ class AgentLoop:
         log_debug(f"AgentLoop: skill invocation /{skill.slug}")
         rewritten = (
             f"[Skill: {skill.name}]\n"
-            f"{skill.body}\n\n"
+            f"{sanitize_skill_body(skill.body, skill.name)}\n\n"
             f"User request: {remaining}"
         )
         return (rewritten, skill)
@@ -648,10 +649,65 @@ class AgentLoop:
         state.modification_plan = ModificationPlan(changes=changes, rationale=plan_text)
 
         # User approval gate — PlanView buttons handle this; just wait for the answer.
+        # On rejection, ask whether to regenerate or abort.
         answer = self._wait_for_queue(self._user_answer_queue).strip().lower()
-        if answer not in ("approve", "1", "yes", "y"):
-            yield TurnEvent.error_event("Modification plan rejected by user.")
-            return None
+        while answer not in ("approve", "1", "yes", "y"):
+            self._check_cancelled()
+            yield TurnEvent.user_question(
+                "Modification plan rejected. Would you like to regenerate it, or type feedback for a revised plan?",
+                ["Regenerate", "Cancel"],
+                tool_call_id="plan_reject",
+                allow_text=True,
+            )
+            followup = self._wait_for_queue(self._user_answer_queue).strip()
+            if followup.lower() in ("cancel", "no", "n"):
+                yield TurnEvent.error_event("Modification plan cancelled by user.")
+                return None
+            # Treat anything else as guidance for a new plan attempt.
+            feedback = followup if followup.lower() != "regenerate" else ""
+            regen_prompt = "The user rejected the previous modification plan."
+            if feedback:
+                regen_prompt += f" Their feedback: {feedback}"
+            regen_prompt += "\n\nPlease generate a revised modification plan."
+            plan_prompt = PLAN_SYNTHESIS_PROMPT.format(knowledge_summary=knowledge_summary)
+            self.session.add_message(Message(role=Role.USER, content=regen_prompt + "\n\n" + plan_prompt))
+
+            state.total_turns += 1
+            yield TurnEvent.turn_start(state.total_turns)
+            try:
+                plan_text, _, usage, _ = yield from self._stream_llm_turn(
+                    exploration_system, None,
+                )
+            except CancellationError:
+                yield TurnEvent.cancelled_event()
+                return None
+            except ProviderError as e:
+                yield TurnEvent.error_event(self._format_provider_error_for_user(e))
+                return None
+
+            if plan_text:
+                yield TurnEvent.text_done(plan_text)
+            self.session.add_message(Message(role=Role.ASSISTANT, content=plan_text, token_usage=usage))
+            yield TurnEvent.turn_end(state.total_turns)
+
+            steps = self._parse_plan(plan_text)
+            if not steps:
+                yield TurnEvent.error_event("Failed to generate a valid modification plan.")
+                return None
+
+            # Rebuild ModificationPlan
+            changes = []
+            for i, step in enumerate(steps):
+                addr_match = re.search(r"0x([0-9a-fA-F]+)", step)
+                addr = int(addr_match.group(1), 16) if addr_match else 0
+                changes.append(PlannedChange(
+                    index=i, target_address=addr,
+                    current_behavior="", proposed_behavior=step, patch_strategy=step,
+                ))
+            state.modification_plan = ModificationPlan(changes=changes, rationale=plan_text)
+
+            yield TurnEvent.plan_generated(steps)
+            answer = self._wait_for_queue(self._user_answer_queue).strip().lower()
 
         state.transition_to(ExplorationPhase.EXECUTE)
         yield TurnEvent.exploration_phase_change("plan", "execute", "Plan approved. Executing patches.")
@@ -1029,7 +1085,7 @@ class AgentLoop:
         if active_skill:
             plan_prompt = _SKILL_PLAN_GENERATION_PROMPT.format(
                 skill_name=active_skill.slug,
-                skill_body=active_skill.body,
+                skill_body=sanitize_skill_body(active_skill.body, active_skill.slug),
             ) + f"\n\nUser request: {user_message}"
         else:
             plan_prompt = _PLAN_GENERATION_PROMPT + f"\n\nUser request: {user_message}"
@@ -1061,10 +1117,51 @@ class AgentLoop:
         yield TurnEvent.plan_generated(steps)
 
         # Phase 2: Wait for user approval — PlanView buttons handle the UI.
+        # On rejection, ask whether to regenerate or abort.
         answer = self._wait_for_queue(self._user_answer_queue).strip().lower()
-        if answer not in ("approve", "1", "yes", "y"):
-            yield TurnEvent.error_event("Plan rejected by user.")
-            return
+        while answer not in ("approve", "1", "yes", "y"):
+            self._check_cancelled()
+            yield TurnEvent.user_question(
+                "Plan rejected. Would you like to regenerate it, or type feedback for a revised plan?",
+                ["Regenerate", "Cancel"],
+                tool_call_id="plan_reject",
+                allow_text=True,
+            )
+            followup = self._wait_for_queue(self._user_answer_queue).strip()
+            if followup.lower() in ("cancel", "no", "n"):
+                yield TurnEvent.error_event("Plan cancelled by user.")
+                return
+            # Treat anything else (including "Regenerate" or free-text feedback)
+            # as guidance for a new plan attempt.
+            feedback = followup if followup.lower() != "regenerate" else ""
+            regen_prompt = "The user rejected the previous plan."
+            if feedback:
+                regen_prompt += f" Their feedback: {feedback}"
+            regen_prompt += "\n\nPlease generate a revised plan."
+            self.session.add_message(Message(role=Role.USER, content=regen_prompt))
+
+            yield TurnEvent.turn_start(1)
+            try:
+                plan_text, _, usage, _ = yield from self._stream_llm_turn(system_prompt, None)
+            except CancellationError:
+                yield TurnEvent.cancelled_event()
+                return
+            except ProviderError as e:
+                yield TurnEvent.error_event(self._format_provider_error_for_user(e))
+                return
+
+            if plan_text:
+                yield TurnEvent.text_done(plan_text)
+            self.session.add_message(Message(role=Role.ASSISTANT, content=plan_text, token_usage=usage))
+            yield TurnEvent.turn_end(1)
+
+            steps = self._parse_plan(plan_text)
+            if not steps:
+                yield TurnEvent.error_event("Failed to generate a valid plan.")
+                return
+
+            yield TurnEvent.plan_generated(steps)
+            answer = self._wait_for_queue(self._user_answer_queue).strip().lower()
 
         # Phase 3: Execute each step
         for i, step_desc in enumerate(steps):
@@ -1461,7 +1558,8 @@ class AgentLoop:
 
     def _handle_save_memory_tool(self, tc: ToolCall) -> Generator[TurnEvent, None, ToolResult]:
         """Handle the save_memory pseudo-tool."""
-        fact = tc.arguments.get("fact", "")
+        from ..core.sanitize import strip_injection_markers
+        fact = strip_injection_markers(tc.arguments.get("fact", ""))
         category = tc.arguments.get("category", "general")
         if not fact:
             content = "Error: 'fact' is required."
@@ -1499,8 +1597,8 @@ class AgentLoop:
                     config=self.config, host_name=self.host_name,
                     skill_registry=self.skills, parent_loop=self,
                 )
-                content = yield from runner.run_task(task, max_turns=max_turns)
-                content = content or "(Subagent produced no output)"
+                raw = yield from runner.run_task(task, max_turns=max_turns)
+                content = sanitize_tool_result(raw or "(Subagent produced no output)", "spawn_subagent")
                 is_err = False
             except Exception as e:
                 content = f"Subagent error: {e}"
@@ -1518,7 +1616,7 @@ class AgentLoop:
             content = f"Skill '{slug}' not found."
             is_err = True
         else:
-            content = f"[Skill: {skill.name}]\n\n{skill.body}"
+            content = f"[Skill: {skill.name}]\n\n{sanitize_skill_body(skill.body, skill.name)}"
             is_err = False
             log_debug(f"Agent activated skill: /{slug}")
         tr = ToolResult(tool_call_id=tc.id, name=tc.name, content=content, is_error=is_err)
@@ -1591,7 +1689,10 @@ class AgentLoop:
             self._consecutive_errors += 1
             log_error(f"Tool {tc.name} unexpected error: {e}\n{traceback.format_exc()}")
 
-        tr = ToolResult(tool_call_id=tc.id, name=tc.name, content=result, is_error=is_error)
+        # Sanitize tool output before it enters the conversation.
+        # Error messages are internal and don't need sandboxing.
+        sanitized = sanitize_tool_result(result, tc.name) if not is_error else result
+        tr = ToolResult(tool_call_id=tc.id, name=tc.name, content=sanitized, is_error=is_error)
         yield TurnEvent.tool_result_event(tc.id, tc.name, result, is_error)
         return tr
 

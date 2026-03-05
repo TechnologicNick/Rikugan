@@ -112,11 +112,14 @@ class TurnEvent:
         return TurnEvent(type=TurnEventType.USAGE_UPDATE, usage=usage)
 
     @staticmethod
-    def user_question(question: str, options: Optional[List[str]], tool_call_id: str) -> "TurnEvent":
+    def user_question(
+        question: str, options: Optional[List[str]], tool_call_id: str,
+        allow_text: bool = False,
+    ) -> "TurnEvent":
         return TurnEvent(
             type=TurnEventType.USER_QUESTION,
             text=question, tool_call_id=tool_call_id,
-            metadata={"options": options or []},
+            metadata={"options": options or [], "allow_text": allow_text},
         )
 
     @staticmethod

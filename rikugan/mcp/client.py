@@ -9,6 +9,7 @@ from typing import Any, Dict, List, Optional
 from ..constants import MCP_DEFAULT_TIMEOUT
 from ..core.errors import MCPConnectionError, MCPError, MCPTimeoutError
 from ..core.logging import log_debug, log_error, log_info
+from ..core.sanitize import sanitize_mcp_result
 from .config import MCPServerConfig
 
 try:
@@ -169,7 +170,11 @@ class MCPClient:
                 parts.append(item.text)
             else:
                 parts.append(str(item))
-        return "\n".join(parts) if parts else str(result)
+        raw = "\n".join(parts) if parts else str(result)
+
+        # MCP results are from external servers — sanitize before they
+        # enter the conversation to mitigate prompt injection.
+        return sanitize_mcp_result(raw, server_name=self.name, tool_name=name)
 
     def _run_loop(self) -> None:
         """Background thread: run the asyncio event loop with the MCP session."""

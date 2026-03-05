@@ -170,8 +170,8 @@ User message → command detection → skill resolution → build system prompt
 | Mode | Trigger | Behavior |
 |------|---------|----------|
 | **Normal** | Any message | Standard stream → tool → repeat loop |
-| **Plan** | `/plan <msg>` | Generate plan → user approves → execute steps |
-| **Exploration** | `/modify <msg>` | 4-phase: EXPLORE (subagent) → PLAN → EXECUTE → SAVE |
+| **Plan** | `/plan <msg>` | Generate plan → user approves → execute steps (reject → regenerate or cancel) |
+| **Exploration** | `/modify <msg>` | 4-phase: EXPLORE (subagent) → PLAN → EXECUTE → SAVE (reject → regenerate or cancel) |
 | **Explore-only** | `/explore <msg>` | Autonomous read-only investigation, no patching |
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for full technical details on all modes, subagents, mutation tracking, and internal data flows.
@@ -185,12 +185,42 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for full technical details on all modes, 
 - Sessions are auto-saved per file (IDB/BNDB path) and restored when re-opening the same file
 - Opening a different file resets all tabs and attempts to restore that file's saved sessions
 
-## Script Approval
+## Approval Gates
+
+### Plan & Save Approval (Button-Only)
+
+When the agent enters plan mode (`/plan`, `/modify`) or requests save approval, the UI
+enters a **button-only approval state**:
+- Text input is **disabled** — the user MUST click the **Approve/Reject** buttons
+- Free-text messages ("continue", "redo", etc.) are silently ignored while awaiting approval
+- This prevents accidental plan execution if the agent crashes and the user types into the chat
+- The input is re-enabled when: a button is clicked, the agent finishes, the user cancels, or an error occurs
+- Any `USER_QUESTION` with predefined options also enforces button-only mode
+
+### Script Approval
 
 The `execute_python` tool always requires explicit user approval before execution:
 - The agent proposes Python code → a syntax-highlighted preview is shown in the chat
 - The user clicks **Allow** or **Deny**
 - Blocked patterns (subprocess, os.system, etc.) are rejected before reaching the approval step
+
+### Prompt Injection Mitigation
+
+Rikugan analyzes untrusted binaries whose content (strings, function names, decompiled code, comments) flows into LLM prompts. A malicious binary could embed adversarial text to manipulate the agent. Mitigations are implemented in `rikugan/core/sanitize.py`:
+
+| Layer | What it does | Where applied |
+|-------|-------------|---------------|
+| **Delimiter quoting** | Wraps untrusted content in XML-like tags (`<tool_result>`, `<binary_info>`, `<mcp_result>`, `<persistent_memory>`, `<skill>`) | All tool results, system prompt context, MCP results, memory, skills |
+| **Injection marker stripping** | Removes sequences mimicking LLM role markers (`[SYSTEM]`, `<\|im_start\|>`, etc.) and instruction override patterns | All untrusted data at point of entry |
+| **Length capping** | Truncates data items to configurable limits | Tool results (50K), MCP results (30K), binary data (2K per item), memory (20K), skills (50K) |
+| **Model awareness** | `DATA_INTEGRITY_SECTION` in the system prompt instructs the model to treat delimited content as data, not instructions | Both IDA and Binary Ninja base prompts |
+| **Memory write sanitization** | `save_memory` tool strips injection markers before writing to RIKUGAN.md | `_handle_save_memory_tool` in loop.py |
+| **Compaction sanitization** | Context window compaction strips markers from summary snippets | `context_window.py` |
+
+**Key files:**
+- `rikugan/core/sanitize.py` — all sanitization functions
+- `rikugan/agent/prompts/base.py` — `DATA_INTEGRITY_SECTION`
+- Integration points: `loop.py` (tool results, skills, memory), `system_prompt.py` (binary context), `mcp/client.py` (external results)
 
 ## Message Queuing
 

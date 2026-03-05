@@ -7,6 +7,7 @@ from typing import List, Optional
 
 from ..constants import SYSTEM_PROMPT_VERSION
 from ..core.logging import log_debug
+from ..core.sanitize import sanitize_binary_context, sanitize_memory
 from .prompts.binja import BINJA_BASE_PROMPT
 from .prompts.ida import IDA_BASE_PROMPT
 
@@ -61,21 +62,24 @@ def build_system_prompt(
     base_prompt = _HOST_PROMPTS.get(host_name, IDA_BASE_PROMPT)
     parts = [base_prompt]
 
-    # Persistent memory — loaded early so it's part of the cached prefix
+    # Persistent memory — loaded early so it's part of the cached prefix.
+    # Sanitized to prevent poisoned memory files from injecting instructions.
     memory = _load_persistent_memory(idb_dir or "")
     if memory:
         parts.append(
             f"\n## Persistent Memory (RIKUGAN.md)\n"
-            f"The following notes persist across sessions for this binary:\n\n{memory}"
+            f"{sanitize_memory(memory)}"
         )
 
+    # Binary context is untrusted — function names, strings, and metadata
+    # originate from the analyzed binary and could contain adversarial content.
     if binary_info:
-        parts.append(f"\n## Current Binary\n{binary_info}")
+        parts.append(f"\n## Current Binary\n{sanitize_binary_context(binary_info, 'binary_info')}")
 
     if current_address:
-        parts.append(f"\n## Current Position\nAddress: {current_address}")
+        parts.append(f"\n## Current Position\nAddress: {sanitize_binary_context(current_address, 'cursor_address')}")
         if current_function:
-            parts.append(f"Function: {current_function}")
+            parts.append(f"Function: {sanitize_binary_context(current_function, 'cursor_function')}")
 
     if tool_names:
         parts.append(f"\n## Available Tools\n{', '.join(tool_names)}")

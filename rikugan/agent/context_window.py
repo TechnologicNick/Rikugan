@@ -6,6 +6,7 @@ from typing import List, Optional
 
 from ..core.types import Message, Role, TokenUsage
 from ..core.logging import log_info
+from ..core.sanitize import strip_injection_markers
 
 
 class ContextWindowManager:
@@ -59,13 +60,16 @@ class ContextWindowManager:
         if not middle:
             return messages
 
-        # Build summary of middle messages
+        # Build summary of middle messages.
+        # Snippets are sanitized to prevent injection payloads from surviving
+        # compaction into the summary.
         summary_parts = ["[Context summary of earlier conversation:]"]
         for msg in middle:
             if msg.role == Role.USER:
-                summary_parts.append(f"User asked: {msg.content[:100]}...")
+                snippet = strip_injection_markers(msg.content[:100])
+                summary_parts.append(f"User asked: {snippet}...")
             elif msg.role == Role.ASSISTANT:
-                text = msg.content[:150] if msg.content else ""
+                text = strip_injection_markers(msg.content[:150]) if msg.content else ""
                 tool_names = [tc.name for tc in msg.tool_calls]
                 if tool_names:
                     summary_parts.append(f"Assistant used tools: {', '.join(tool_names)}")
