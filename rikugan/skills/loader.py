@@ -171,24 +171,46 @@ def _load_body(md_path: str) -> str:
 
 
 def _load_references(skill_dir: str) -> str:
-    """Load .md files from <skill>/references/ and concatenate them."""
+    """Load .md files from <skill>/references/ and concatenate them.
+
+    Also loads host-specific references from <skill>/references/ida/ or
+    <skill>/references/binja/ depending on the active host, so generic
+    skills can ship separate reference docs per tool without injecting
+    both into the context.
+    """
+    from ..core.host import HOST_BINARY_NINJA, HOST_IDA, host_kind
+
     refs_dir = os.path.join(skill_dir, "references")
     if not os.path.isdir(refs_dir):
         return ""
 
+    _HOST_SUBDIR = {HOST_IDA: "ida", HOST_BINARY_NINJA: "binja"}
+
     parts: List[str] = []
-    for fname in sorted(os.listdir(refs_dir)):
-        if not fname.endswith(".md"):
-            continue
-        fpath = os.path.join(refs_dir, fname)
-        try:
-            with open(fpath, "r", encoding="utf-8") as f:
-                content = f.read().strip()
-            if content:
-                parts.append(f"## Reference: {fname}\n{content}")
-                log_debug(f"Loaded skill reference: {fpath}")
-        except OSError as e:
-            log_error(f"Failed to load skill reference {fpath}: {e}")
+
+    def _load_dir(directory: str) -> None:
+        for fname in sorted(os.listdir(directory)):
+            if not fname.endswith(".md"):
+                continue
+            fpath = os.path.join(directory, fname)
+            try:
+                with open(fpath, "r", encoding="utf-8") as f:
+                    content = f.read().strip()
+                if content:
+                    parts.append(f"## Reference: {fname}\n{content}")
+                    log_debug(f"Loaded skill reference: {fpath}")
+            except OSError as e:
+                log_error(f"Failed to load skill reference {fpath}: {e}")
+
+    # Flat references — always loaded
+    _load_dir(refs_dir)
+
+    # Host-specific subdirectory — only the active host's folder is loaded
+    host_subdir = _HOST_SUBDIR.get(host_kind())
+    if host_subdir:
+        host_refs_dir = os.path.join(refs_dir, host_subdir)
+        if os.path.isdir(host_refs_dir):
+            _load_dir(host_refs_dir)
 
     return "\n\n".join(parts)
 

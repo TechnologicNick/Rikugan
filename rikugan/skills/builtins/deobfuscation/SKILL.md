@@ -1,126 +1,180 @@
 ---
 name: Deobfuscation
-description: Systematic deobfuscation — string decryption, CFF removal, opaque predicates, MBA simplification
-tags: [deobfuscation, obfuscation, cff, mba, opaque-predicates]
+description: >-
+  Systematic binary deobfuscation — string decryption, control flow flattening (CFF) removal,
+  opaque predicate elimination, mixed boolean-arithmetic (MBA) simplification, bogus control flow,
+  instruction substitution reversal, dead code removal, and anti-disassembly fixes.
+  Trigger: deobfuscate, unobfuscate, deobfuscation, CFF, flatten, opaque predicate, MBA,
+  obfuscated, OLLVM, Tigress, VMProtect, string decryption, junk code, bogus control flow,
+  instruction substitution, anti-disassembly
+tags:
+  - deobfuscation
+  - obfuscation
+  - cff
+  - mba
+  - opaque-predicates
+  - hexrays
+  - microcode
+  - ollvm
+  - tigress
+  - string-decryption
+  - bogus-control-flow
+  - instruction-substitution
 mode: plan
 ---
 # Deobfuscation Mode
 
 Deobfuscate fully first. Analyze afterward.
-NEVER analyze obfuscated code and draw conclusions — it misleads.
+**Never draw conclusions from obfuscated code — it misleads.**
+
+Host-specific tools, API details, and full algorithm implementations are in the auto-loaded references:
+
+- **IDA**: `references/ida/tools.md` (available tools), `guide.md` (workflow & technique rules), `microcode-guide.md` (reading/writing microcode), `algorithm-reference.md` (full implementations)
+- **Binary Ninja**: `references/binja/tools.md` (available tools)
+
+**Read the host-specific tools reference first** to know what primitives are available.
 
 ## Order of Operations
 
-### 1. String Decryption (always first — unlocks context, unless user asked for SPECIFIC deobfuscation)
+### 1. String Decryption (always first — unlocks context)
 
-Strings are the fastest path to understanding.
+Skip only if the user asked for a specific deobfuscation type.
 
-1. Check for readable strings. If very few in a large binary → strings are encrypted.
-2. Find the string decode stub: a small function called before every string use.
-3. Decompile it, identify the algorithm (XOR, RC4, custom).
-4. Use xrefs on the decode function to find all encrypted string call sites.
-5. Decrypted strings give you: C2 addresses, file paths, registry keys, API names.
+Strings are the fastest path to understanding a binary. Encrypted strings signal intentional obfuscation.
+
+1. Check for readable strings — very few in a large binary means strings are encrypted.
+2. Find the decode stub: a small function called frequently, often before string use.
+3. Decompile it and identify the algorithm (XOR, RC4, custom).
+4. Use xrefs on the decode function to locate all call sites.
+5. At each call site, trace arguments to extract encrypted data and key.
+6. Reimplement the decode logic to compute plaintext.
+7. Annotate decrypted strings at each call site (C2 addresses, file paths, registry keys, API names).
+8. Rename the decode function (e.g., `decrypt_string`).
 
 ### 2. Structural Deobfuscation
 
-**You are the deobfuscator.** Read the IL, understand what the obfuscation is doing, and use the write primitives to undo it. The tools give you read/write access to IL — you decide what to change.
+**You are the deobfuscator.** Read the IL/pseudocode, understand the obfuscation, then use write primitives to undo it. Read, understand, modify, verify.
 
-#### How to read IL
-
-- `get_il` — read IL at any level (LLIL, MLIL, HLIL). MLIL is the most useful for deobfuscation: it has typed variables, SSA form, and shows data flow clearly.
-- `get_cfg` — read CFG structure (blocks, edges, back edges, dominators, loops). This tells you the shape of the function.
-- `track_variable_ssa` — trace a variable through SSA def-use chains. See every assignment, every use, every constant value.
-- `decompile_function` — read the decompiled C. After each modification, redecompile to verify improvement.
-- `get_il_block` — read a single IL block's instructions.
-
-#### How to write IL
-
-- `il_set_condition` — force a conditional branch to always-true or always-false. Use this to eliminate opaque predicates and force dispatcher branches.
-- `il_nop_expr` — NOP an IL expression by index. Use this to remove state variable assignments, dead stores, junk computations.
-- `il_replace_expr` — replace an IL expression with a constant, NOP, or copy of another expression. Use this for MBA simplification (replace complex expression with simplified result).
-- `il_remove_block` — NOP all instructions in a basic block. Use this to eliminate dead code blocks.
-- `nop_instructions` — NOP machine code bytes at an address range. Use this when IL-level modification isn't sufficient and you need to patch the underlying bytes.
-- `patch_branch` — force/invert/unconditional a conditional branch at byte level (x86 only). Fallback when IL-level condition forcing doesn't work.
-- `write_bytes` — write arbitrary bytes. Last resort escape hatch.
-- `redecompile_function` — force redecompilation after modifications.
-
-#### How to batch-transform
-
-- `install_il_workflow` — register a Python transform as a BN workflow activity. The transform runs in the analysis pipeline for every function. Use this when you identify a recurring pattern across many functions (e.g., the same opaque predicate template everywhere). Write the Python transform code yourself.
-
-### What obfuscation looks like in IL
+Work through these techniques in order — each one may reveal patterns hidden by the previous layer.
 
 #### Control Flow Flattening (CFF)
 
-**What it is:** The original linear control flow is replaced with a dispatcher loop. A state variable determines which block executes next.
+A state machine dispatcher replaces linear control flow.
 
-**What it looks like in IL:**
-- A loop with a back edge to a header block
-- The header block compares a variable against multiple constants (if-else chain or switch)
-- Each case body assigns a new constant to the same variable (the state variable)
-- The variable may be a named var (`var_18 = 0x25`) or a memory store (`[rbp - 0x10].d = 0x25`) depending on optimization level
+**What it looks like:**
+- A loop with a back edge to a header block.
+- The header compares a variable (state variable) against many constants.
+- Each case body assigns a new constant to the state variable.
+- At low optimization: state var may appear as memory stores (`[rbp-0x10].d = 0x25`), not register vars.
 
-**How to remove it:**
-1. Read the IL with `get_il`. Identify the state variable and the dispatcher pattern.
-2. Read the CFG with `get_cfg`. Find the back edge (dispatcher loop) and all case blocks.
-3. Map the state machine: for each case, what state value triggers it, and what state value does it assign next? This gives you the original execution order.
-4. NOP all state variable assignments with `il_nop_expr` — they're dispatcher bookkeeping.
-5. Force or NOP the dispatcher back edge so control falls through linearly.
-6. NOP/remove dead code blocks (unreachable states, dispatcher overhead).
-7. Redecompile to verify. The function should now read as linear code.
-
-**-O0 gotcha:** At -O0, the compiler uses memory stores instead of variable assignments. The state variable appears as `[rbp - 0x10].d = 0x25` (STORE) rather than `var_18 = 0x25` (SET_VAR). The comparisons may use temporaries: `temp0 = [rbp - 0x10].d; if (temp0 == 0x10)`. Track by matching the memory expression, not the variable name.
+**How to remove:**
+1. Identify the state variable — the variable compared most frequently against constants. **No entropy filtering** — state values may not look random.
+2. Assume **multiple dispatcher blocks** — any block comparing the state variable is a dispatcher.
+3. Map state to handler: the non-dispatcher jump target for each state value.
+4. Rewire each handler to jump directly to its successor handler (bypass dispatcher).
+5. NOP all state variable assignments (dispatcher bookkeeping).
+6. Remove dead dispatcher blocks (the decompiler handles this automatically after rewiring).
+7. Redecompile — the function should read as linear code.
 
 #### Opaque Predicates
 
-**What it is:** Conditions that always evaluate to the same value but look non-trivial.
+Conditions that always evaluate the same way.
 
-**What it looks like in IL:**
-- Algebraic: `x * (x-1) % 2 == 0` — always true
-- Constant-returning functions: `if (always_true())` — a function that trivially returns a constant
-- BN may already resolve some to `if (true)` or `if (false)` — check HLIL
+**Forms:**
+- Algebraic: `x * (x-1) % 2 == 0` (always true), `x^2 + x` is always even.
+- Constant-returning functions hidden behind indirection.
+- Environment checks that are constant at analysis time.
 
-**How to remove:** Use `il_set_condition` to force the branch to the always-taken direction. Then the dead branch becomes unreachable — remove it with `il_remove_block` or `il_nop_expr`.
+Check the decompiler output first — it may already resolve some to `if (true)`/`if (false)`.
+
+**How to remove:**
+- Always-true: force the branch to the taken target (convert to unconditional goto).
+- Always-false: NOP the branch instruction entirely.
+- The dead branch becomes unreachable — the decompiler prunes it automatically.
+- For non-trivially-constant predicates, use Z3 via scripting to prove the predicate, then install an optimizer/transform to force it.
+
+#### Bogus Control Flow (BCF)
+
+Conditional jumps with opaque predicates branching to junk/cloned blocks. Common in OLLVM.
+
+**What it looks like:**
+- A conditional branch where one successor contains junk code (no real data flow contribution) or a clone of the original block with added noise.
+- The opaque predicate ensures the junk path is never taken.
+
+**How to remove:**
+- Resolve the opaque predicate (same technique as above) — force the branch to the real successor.
+- Dead block elimination handles the junk blocks automatically.
 
 #### Mixed Boolean-Arithmetic (MBA)
 
-**What it is:** Simple operations disguised as complex boolean-arithmetic expressions.
+Simple operations disguised as complex boolean-arithmetic expressions.
 
 **Common identities:**
 - `(x ^ y) + 2*(x & y)` = `x + y`
 - `(x | y) - (x & ~y)` = `y`
-- `(x & y) | (x & ~y)` = `x`
 - `~(~x & ~y)` = `x | y`
+- `(x & 0xFF) | (x & ~0xFF)` = `x`
+- `(x | y) + (x & y)` = `x + y` (alternative form)
 
-**How to remove:** Identify the simplified form, then use `il_replace_expr` to swap the complex expression with a simpler one (constant or smaller expression). Work bottom-up: simplify innermost MBA expressions first.
+**How to remove:**
+- When both operands are constants: compute the result, replace with a mov/constant.
+- When operands are symbolic: pattern-match known identities and replace with the simplified form.
+- Work bottom-up (simplify inner expressions first).
+- Apply `(1 << (size * 8)) - 1` bitmask when constant-folding to handle unsigned overflow.
+- Multiple passes may be needed — MBA expressions can be nested.
+
+#### Instruction Substitution
+
+Simple operations replaced with equivalent complex sequences. Common in OLLVM.
+
+**Common patterns (match and reverse):**
+- `a + b` replaced by: `a - (-b)`, `(a ^ b) + 2*(a & b)`, `(a | b) + (a & b)`
+- `a - b` replaced by: `a + (-b)`, `(a ^ b) - 2*(~a & b)`
+- `a ^ b` replaced by: `(a | b) - (a & b)`, `(~a & b) | (a & ~b)`
+- `a & b` replaced by: `(a | b) - (a ^ b)`, `~(~a | ~b)`
+- `a | b` replaced by: `(a & b) + (a ^ b)`, `~(~a & ~b)`
+
+**How to remove:** Pattern-match the complex sequence and replace with the original simple operation. Multiple passes may be needed (substitutions can be chained).
 
 #### Junk Code / Dead Stores
 
-**What it is:** Instructions that compute values never used, or stores to locations never read.
+Instructions computing values never used.
 
-**How to identify:** Track variables with `track_variable_ssa`. If a variable version has no uses, its definition is dead. If a block has no live successors and no side effects, it's dead.
+- Identify via def-use chains: if a variable is defined but has no uses before its next definition, the definition is dead.
+- A `mov` to a variable that is immediately overwritten is a dead store — NOP it.
+- After CFF removal, many state variable assignments become dead — clean them up.
 
-**How to remove:** `il_nop_expr` the dead instructions.
+#### Anti-Disassembly
+
+Junk bytes inserted to confuse linear disassembly.
+
+**Common patterns:**
+- Junk bytes after unconditional jumps: `jmp +2; db 0xE8` (fake call prefix).
+- Overlapping instructions exploiting x86 variable-length encoding.
+
+**How to fix:** NOP the junk bytes at the byte level, or redefine function boundaries. Check disassembly first — the disassembler may already handle some patterns.
 
 ### 3. VM Boundary (if detected)
 
-VM virtualization is NOT deobfuscatable with IL tools.
-1. Identify the VM entry point, bytecode buffer, handler table.
-2. Document: entry address, bytecode location, handler table address, handler count.
-3. Focus analysis on non-virtualized code paths.
-4. Recommend specialized VM lifting tooling to the user.
+Not reversible with IL-level tools.
+1. Identify: VM entry point, bytecode buffer, handler table address, handler count.
+2. Document all addresses and the dispatch mechanism.
+3. Focus deobfuscation on non-virtualized code paths.
+4. Recommend specialized VM lifting tooling (e.g., Miasm, Triton).
 
 ### 4. Post-Deobfuscation
 
-After all deobfuscation:
 - Redecompile all modified functions.
-- The code should now be readable. If it isn't, check for more obfuscation layers.
+- Code should now be readable. If not, check for more obfuscation layers.
+- Apply all annotations (renamed functions, decrypted string comments, recovered types).
 - Proceed with normal analysis.
 
 ## Critical Rules
 
-- Read the IL before acting. Spend 1 tool call to understand the obfuscation rather than 20 guessing.
-- String decryption ALWAYS comes first.
-- After each modification, redecompile to verify improvement.
-- If a tool-based approach isn't working, fall back to byte-level patching (`nop_instructions`, `patch_branch`, `write_bytes`).
-- You are the deobfuscator. The tools are your hands. Read, understand, modify, verify.
+- **Read the IL before acting.** One read call beats 20 guesses.
+- **String decryption ALWAYS comes first** (unless user specifies otherwise).
+- **After each modification, redecompile to verify improvement.**
+- **Iterative approach:** complex obfuscation needs multiple passes — install optimizer/transform, redecompile, check, refine.
+- **If IL-level approach fails, fall back to byte-level patching.**
+- **Never draw conclusions from obfuscated code.**
+- **Check the host-specific reference files** for tool-specific rules (maturity guards, operand comparison, dirty marking).
