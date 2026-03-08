@@ -8,6 +8,33 @@ A reverse-engineering agent for **IDA Pro** and **Binary Ninja** that integrates
 
 ![alt text](assets/ida_showcase.png)
 
+### One-line install
+
+The quickest way to install. Auto-detects IDA Pro, Binary Ninja, or both.
+
+**Linux / macOS:**
+```bash
+curl -fsSL https://raw.githubusercontent.com/buzzer-re/Rikugan/main/install.sh | bash
+```
+
+**Windows (PowerShell):**
+```powershell
+irm https://raw.githubusercontent.com/buzzer-re/Rikugan/main/install.ps1 | iex
+```
+
+To install for a specific host only:
+
+```bash
+# Linux / macOS
+curl -fsSL https://raw.githubusercontent.com/buzzer-re/Rikugan/main/install.sh | bash -s -- --ida
+curl -fsSL https://raw.githubusercontent.com/buzzer-re/Rikugan/main/install.sh | bash -s -- --binja
+```
+
+```powershell
+# Windows
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/buzzer-re/Rikugan/main/install.ps1))) -Target ida
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/buzzer-re/Rikugan/main/install.ps1))) -Target binja
+```
 
 ## Is this another MCP client?
 
@@ -142,7 +169,8 @@ Runs in plan mode, so you can review the plan before the agent starts patching.
 > **IDA Pro + Python > 3.10 warning:** IDA Pro's Qt/PySide6 binding (Shiboken) has a known Use-After-Free bug that can cause crashes when Python > 3.10 is used. The issue is triggered by Shiboken's `__import__` hook during Qt signal dispatch — Rikugan works around this by routing all `ida_*` imports through `importlib.import_module()` and installing a re-entrancy guard on `builtins.__import__`. That said, Python 3.10 is still the safest choice for IDA Pro. See the [upstream report](https://community.hex-rays.com/t/ida-9-3-b1-macos-arm64-uaf-crash/646) for details.
 
 
-## Installation
+
+## Manual install
 
 Clone this repository, then run the installer for your target host:
 
