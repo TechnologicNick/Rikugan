@@ -78,9 +78,7 @@ class PlanView(QFrame):
 
         # Header
         self._header = QLabel("Plan")
-        self._header.setStyleSheet(
-            "color: #569cd6; font-weight: bold; font-size: 13px;"
-        )
+        self._header.setStyleSheet("color: #569cd6; font-weight: bold; font-size: 13px;")
         layout.addWidget(self._header)
 
         # Steps container

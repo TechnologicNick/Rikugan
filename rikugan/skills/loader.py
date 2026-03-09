@@ -284,9 +284,7 @@ def discover_skills(skills_dir: str) -> list[SkillDefinition]:
             )
 
             skills.append(skill)
-            log_debug(
-                f"Discovered skill: /{entry} — {skill.description or '(no description)'}"
-            )
+            log_debug(f"Discovered skill: /{entry} — {skill.description or '(no description)'}")
 
         except (OSError, ValueError, KeyError) as e:
             log_error(f"Failed to load skill from {md_path}: {e}")

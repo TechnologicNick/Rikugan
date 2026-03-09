@@ -39,13 +39,9 @@ class MutationEntryWidget(QFrame):
         self._indicator = QLabel("↩" if record.reversible else "⊘")
         self._indicator.setFixedWidth(20)
         self._indicator.setStyleSheet(
-            "color: #4ec9b0; font-size: 14px;"
-            if record.reversible
-            else "color: #808080; font-size: 14px;"
+            "color: #4ec9b0; font-size: 14px;" if record.reversible else "color: #808080; font-size: 14px;"
         )
-        self._indicator.setToolTip(
-            "Reversible" if record.reversible else "Not reversible"
-        )
+        self._indicator.setToolTip("Reversible" if record.reversible else "Not reversible")
         layout.addWidget(self._indicator)
 
         # Description
@@ -58,8 +54,7 @@ class MutationEntryWidget(QFrame):
         # Tool name badge
         self._tool_badge = QLabel(record.tool_name)
         self._tool_badge.setStyleSheet(
-            "color: #808080; font-size: 10px; padding: 1px 4px; "
-            "background: #2d2d2d; border-radius: 3px;"
+            "color: #808080; font-size: 10px; padding: 1px 4px; background: #2d2d2d; border-radius: 3px;"
         )
         layout.addWidget(self._tool_badge)
 
@@ -115,9 +110,7 @@ class MutationLogPanel(QFrame):
         self._scroll = QScrollArea()
         self._scroll.setWidgetResizable(True)
         self._scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self._scroll.setStyleSheet(
-            "QScrollArea { border: none; background: transparent; }"
-        )
+        self._scroll.setStyleSheet("QScrollArea { border: none; background: transparent; }")
 
         self._entries_widget = QWidget()
         self._entries_layout = QVBoxLayout(self._entries_widget)
@@ -158,6 +151,4 @@ class MutationLogPanel(QFrame):
     def _update_count(self) -> None:
         n = len(self._entries)
         self._count_label.setText(f"{n} mutation{'s' if n != 1 else ''}")
-        self._undo_btn.setEnabled(
-            n > 0 and any(e.record.reversible for e in self._entries)
-        )
+        self._undo_btn.setEnabled(n > 0 and any(e.record.reversible for e in self._entries))

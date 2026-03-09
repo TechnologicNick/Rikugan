@@ -38,9 +38,7 @@ class RikuganPanel(idaapi.PluginForm):
         root_layout.setContentsMargins(0, 0, 0, 0)
         self._core = RikuganPanelCore(
             controller_factory=IdaSessionController,
-            ui_hooks_factory=lambda panel_getter: RikuganUIHooks(
-                panel_getter=panel_getter
-            ),
+            ui_hooks_factory=lambda panel_getter: RikuganUIHooks(panel_getter=panel_getter),
             parent=self._root,
         )
         root_layout.addWidget(self._core)

@@ -39,9 +39,7 @@ def _get_base_namespace() -> dict:
 
 @tool(category="scripting", mutating=True)
 def execute_python(
-    code: Annotated[
-        str, "Python code to execute in Binary Ninja's scripting environment"
-    ],
+    code: Annotated[str, "Python code to execute in Binary Ninja's scripting environment"],
 ) -> str:
     """Execute arbitrary Python code in Binary Ninja context and return stdout/stderr.
 

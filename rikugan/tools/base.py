@@ -161,9 +161,9 @@ def _build_parameters(func: Callable) -> list[ParameterSchema]:
 
         # Determine required and default
         has_default = param.default is not inspect.Parameter.empty
-        is_optional = getattr(annotation, "__origin__", None) is typing.Union and type(
-            None
-        ) in getattr(annotation, "__args__", ())
+        is_optional = getattr(annotation, "__origin__", None) is typing.Union and type(None) in getattr(
+            annotation, "__args__", ()
+        )
 
         ps = ParameterSchema(
             name=name,

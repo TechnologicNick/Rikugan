@@ -155,9 +155,7 @@ class ChatView(QScrollArea):
         self._tool_run_names.clear()
         self._tool_run_widgets.clear()
 
-    def _register_tool_widget(
-        self, tool_name: str, tool_id: str, widget: ToolCallWidget
-    ) -> None:
+    def _register_tool_widget(self, tool_name: str, tool_id: str, widget: ToolCallWidget) -> None:
         """Attach a new tool widget to the current run, collapsing at threshold."""
         self._tool_run_ids.append(tool_id)
         self._tool_run_names.append(tool_name)

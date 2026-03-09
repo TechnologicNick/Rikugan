@@ -82,10 +82,7 @@ class KnowledgeBase:
         if finding.address is not None and finding.address in self._seen_addresses:
             # Update existing finding at same address
             for i, existing in enumerate(self.findings):
-                if (
-                    existing.address == finding.address
-                    and existing.category == finding.category
-                ):
+                if existing.address == finding.address and existing.category == finding.category:
                     self.findings[i] = finding
                     return
         if finding.address is not None:
@@ -105,11 +102,7 @@ class KnowledgeBase:
         return (
             len(self.relevant_functions) >= 1
             and len(self.hypotheses) >= 1
-            and any(
-                f.relevance == "high"
-                for f in self.findings
-                if f.category == "hypothesis"
-            )
+            and any(f.relevance == "high" for f in self.findings if f.category == "hypothesis")
         )
 
     @property
@@ -120,9 +113,7 @@ class KnowledgeBase:
             gaps.append("0 relevant functions (need ≥1)")
         if len(self.hypotheses) < 1:
             gaps.append("0 hypotheses (need ≥1)")
-        elif not any(
-            f.relevance == "high" for f in self.findings if f.category == "hypothesis"
-        ):
+        elif not any(f.relevance == "high" for f in self.findings if f.category == "hypothesis"):
             gaps.append("0 high-relevance hypotheses (need ≥1 with relevance='high')")
         return "; ".join(gaps) if gaps else ""
 
@@ -216,9 +207,7 @@ class PatchSummary:
     def compute(self) -> None:
         """Recompute summary fields from patch list."""
         self.total_bytes_modified = sum(len(p.new_bytes) for p in self.patches)
-        self.all_verified = (
-            all(p.verified for p in self.patches) if self.patches else False
-        )
+        self.all_verified = all(p.verified for p in self.patches) if self.patches else False
 
 
 # ---------------------------------------------------------------------------

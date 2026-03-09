@@ -13,9 +13,7 @@ try:
     idautils = importlib.import_module("idautils")
     idc = importlib.import_module("idc")
 except ImportError:
-    ida_funcs = idautils = idc = (
-        None  # IDA not present — tools unavailable in non-IDA context
-    )
+    ida_funcs = idautils = idc = None  # IDA not present — tools unavailable in non-IDA context
 
 
 @tool(category="disassembly")

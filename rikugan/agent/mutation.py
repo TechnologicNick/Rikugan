@@ -27,9 +27,7 @@ class MutationRecord:
 # ---------------------------------------------------------------------------
 
 
-def _reverse_rename_function(
-    args: dict[str, Any], pre: dict[str, Any]
-) -> MutationRecord:
+def _reverse_rename_function(args: dict[str, Any], pre: dict[str, Any]) -> MutationRecord:
     old_name = args.get("old_name", "")
     new_name = args.get("new_name", "")
     return MutationRecord(
@@ -41,9 +39,7 @@ def _reverse_rename_function(
     )
 
 
-def _reverse_rename_variable(
-    tool_name: str, args: dict[str, Any], pre: dict[str, Any]
-) -> MutationRecord:
+def _reverse_rename_variable(tool_name: str, args: dict[str, Any], pre: dict[str, Any]) -> MutationRecord:
     func = args.get("function_name", "")
     old_var = args.get("variable_name", "")
     new_var = args.get("new_name", "")
@@ -91,17 +87,11 @@ def _reverse_set_comment(args: dict[str, Any], pre: dict[str, Any]) -> MutationR
     return _reverse_comment("set_comment", "delete_comment", "address", args, pre)
 
 
-def _reverse_set_function_comment(
-    args: dict[str, Any], pre: dict[str, Any]
-) -> MutationRecord:
-    return _reverse_comment(
-        "set_function_comment", "delete_function_comment", "function_name", args, pre
-    )
+def _reverse_set_function_comment(args: dict[str, Any], pre: dict[str, Any]) -> MutationRecord:
+    return _reverse_comment("set_function_comment", "delete_function_comment", "function_name", args, pre)
 
 
-def _reverse_set_pseudocode_comment(
-    args: dict[str, Any], pre: dict[str, Any]
-) -> MutationRecord:
+def _reverse_set_pseudocode_comment(args: dict[str, Any], pre: dict[str, Any]) -> MutationRecord:
     func_addr = args.get("func_address", "")
     target_addr = args.get("target_address", "")
     old_comment = pre.get("old_comment", "")
@@ -141,9 +131,7 @@ def _reverse_rename_data(args: dict[str, Any], pre: dict[str, Any]) -> MutationR
     )
 
 
-def _reverse_set_function_prototype(
-    args: dict[str, Any], pre: dict[str, Any]
-) -> MutationRecord | None:
+def _reverse_set_function_prototype(args: dict[str, Any], pre: dict[str, Any]) -> MutationRecord | None:
     target = args.get("name_or_address", "")
     old_proto = pre.get("old_prototype", "")
     if old_proto:
@@ -157,9 +145,7 @@ def _reverse_set_function_prototype(
     return None
 
 
-def _reverse_retype_variable(
-    args: dict[str, Any], pre: dict[str, Any]
-) -> MutationRecord | None:
+def _reverse_retype_variable(args: dict[str, Any], pre: dict[str, Any]) -> MutationRecord | None:
     func = args.get("function_name", "")
     var = args.get("variable_name", "")
     old_type = pre.get("old_type", "")
@@ -182,9 +168,7 @@ def _reverse_retype_variable(
 _REVERSE_BUILDERS: dict[str, Any] = {
     "rename_function": _reverse_rename_function,
     "rename_variable": lambda a, p: _reverse_rename_variable("rename_variable", a, p),
-    "rename_single_variable": lambda a, p: _reverse_rename_variable(
-        "rename_single_variable", a, p
-    ),
+    "rename_single_variable": lambda a, p: _reverse_rename_variable("rename_single_variable", a, p),
     "set_comment": _reverse_set_comment,
     "set_function_comment": _reverse_set_function_comment,
     "set_pseudocode_comment": _reverse_set_pseudocode_comment,
@@ -241,9 +225,7 @@ def capture_pre_state(
         elif tool_name == "set_function_comment":
             func = arguments.get("function_name", "")
             if func:
-                pre["old_comment"] = tool_executor(
-                    "get_function_comment", {"function_name": func}
-                )
+                pre["old_comment"] = tool_executor("get_function_comment", {"function_name": func})
         elif tool_name == "set_pseudocode_comment":
             func_addr = arguments.get("func_address", "")
             target_addr = arguments.get("target_address", "")
@@ -255,16 +237,12 @@ def capture_pre_state(
         elif tool_name == "set_function_prototype":
             target = arguments.get("name_or_address", "")
             if target:
-                pre["old_prototype"] = tool_executor(
-                    "get_function_prototype", {"name_or_address": target}
-                )
+                pre["old_prototype"] = tool_executor("get_function_prototype", {"name_or_address": target})
         elif tool_name == "retype_variable":
             func = arguments.get("function_name", "")
             var = arguments.get("variable_name", "")
             if func and var:
-                pre["old_type"] = tool_executor(
-                    "get_variable_type", {"function_name": func, "variable_name": var}
-                )
+                pre["old_type"] = tool_executor("get_variable_type", {"function_name": func, "variable_name": var})
     except Exception as e:
         log_debug(f"capture_pre_state failed for {tool_name}: {e}")
 

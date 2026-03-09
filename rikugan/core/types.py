@@ -73,10 +73,7 @@ class Message:
         if self.content:
             d["content"] = self.content
         if self.tool_calls:
-            d["tool_calls"] = [
-                {"id": tc.id, "name": tc.name, "arguments": tc.arguments}
-                for tc in self.tool_calls
-            ]
+            d["tool_calls"] = [{"id": tc.id, "name": tc.name, "arguments": tc.arguments} for tc in self.tool_calls]
         if self.tool_call_id:
             d["tool_call_id"] = self.tool_call_id
         if self.name:
@@ -104,8 +101,7 @@ class Message:
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> Message:
         tool_calls = [
-            ToolCall(id=tc["id"], name=tc["name"], arguments=tc["arguments"])
-            for tc in d.get("tool_calls", [])
+            ToolCall(id=tc["id"], name=tc["name"], arguments=tc["arguments"]) for tc in d.get("tool_calls", [])
         ]
         tool_results = [
             ToolResult(

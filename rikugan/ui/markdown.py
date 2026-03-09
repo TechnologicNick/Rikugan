@@ -53,11 +53,7 @@ def md_to_html(text: str) -> str:
     def _stash_block(m: re.Match) -> str:
         lang = m.group(1) or ""
         code = html.escape(m.group(2).strip("\n"))
-        lang_tag = (
-            f'<span style="color:#808080;font-size:10px;">{html.escape(lang)}</span><br>'
-            if lang
-            else ""
-        )
+        lang_tag = f'<span style="color:#808080;font-size:10px;">{html.escape(lang)}</span><br>' if lang else ""
         block_html = f'<div style="{_BLOCK_CODE_STYLE}">{lang_tag}{code}</div>'
         blocks.append(block_html)
         return f"\x00BLOCK{len(blocks) - 1}\x00"
@@ -93,8 +89,7 @@ def md_to_html(text: str) -> str:
             size = sizes.get(level, 13)
             h_text = _inline(hm.group(2))
             out_lines.append(
-                f'<div style="color:{_H_COLOR};font-weight:bold;font-size:{size}px;'
-                f'margin:6px 0 2px 0;">{h_text}</div>'
+                f'<div style="color:{_H_COLOR};font-weight:bold;font-size:{size}px;margin:6px 0 2px 0;">{h_text}</div>'
             )
             i += 1
             continue
@@ -106,9 +101,7 @@ def md_to_html(text: str) -> str:
                 item_text = re.sub(r"^\s*[-*]\s+", "", lines[i])
                 items.append(f"<li>{_inline(item_text)}</li>")
                 i += 1
-            out_lines.append(
-                "<ul style='margin:2px 0 2px 16px;'>" + "".join(items) + "</ul>"
-            )
+            out_lines.append("<ul style='margin:2px 0 2px 16px;'>" + "".join(items) + "</ul>")
             continue
 
         # Numbered list — collect consecutive items
@@ -118,9 +111,7 @@ def md_to_html(text: str) -> str:
                 item_text = re.sub(r"^\s*\d+[.)]\s+", "", lines[i])
                 items.append(f"<li>{_inline(item_text)}</li>")
                 i += 1
-            out_lines.append(
-                "<ol style='margin:2px 0 2px 16px;'>" + "".join(items) + "</ol>"
-            )
+            out_lines.append("<ol style='margin:2px 0 2px 16px;'>" + "".join(items) + "</ol>")
             continue
 
         # Empty line → paragraph break

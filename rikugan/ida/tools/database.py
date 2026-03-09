@@ -38,9 +38,7 @@ def list_segments() -> str:
                 perms += "W"
             if seg.perm & 1:  # X
                 perms += "X"
-        lines.append(
-            f"  {name:16s}  0x{seg_ea:x}\u20130x{end:x}  ({size:#x} bytes)  {perms}"
-        )
+        lines.append(f"  {name:16s}  0x{seg_ea:x}\u20130x{end:x}  ({size:#x} bytes)  {perms}")
     return "\n".join(lines)
 
 
@@ -105,9 +103,7 @@ def get_binary_info() -> str:
         try:
             info = idaapi.get_inf_structure()
             lines.append(f"Processor: {info.procname}")
-            lines.append(
-                f"Bits: {16 if info.is_16bit() else 32 if info.is_32bit() else 64}"
-            )
+            lines.append(f"Bits: {16 if info.is_16bit() else 32 if info.is_32bit() else 64}")
             lines.append(f"Entry point: 0x{info.start_ea:x}")
             lines.append(f"Min address: 0x{info.min_ea:x}")
             lines.append(f"Max address: 0x{info.max_ea:x}")

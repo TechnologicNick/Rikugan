@@ -67,9 +67,7 @@ def iter_functions(bv: Any) -> list[Any]:
     return funcs
 
 
-def iter_function_instruction_addresses(
-    func: Any, max_instructions: int = 100000
-) -> Iterable[int]:
+def iter_function_instruction_addresses(func: Any, max_instructions: int = 100000) -> Iterable[int]:
     count = 0
     for bb in list(getattr(func, "basic_blocks", []) or []):
         start = int(getattr(bb, "start", 0))

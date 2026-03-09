@@ -56,9 +56,7 @@ def list_segments() -> str:
     for name, start, end, perms in _iter_segments(bv):
         size = max(0, end - start)
         disp = name or "<segment>"
-        lines.append(
-            f"  {disp:16s}  0x{start:x}\u20130x{end:x}  ({size:#x} bytes)  {perms}"
-        )
+        lines.append(f"  {disp:16s}  0x{start:x}\u20130x{end:x}  ({size:#x} bytes)  {perms}")
     return "\n".join(lines)
 
 

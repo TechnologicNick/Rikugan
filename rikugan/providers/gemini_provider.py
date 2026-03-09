@@ -31,11 +31,7 @@ class GeminiProvider(LLMProvider):
     """Adapter for Google Gemini via the google-genai SDK."""
 
     def __init__(self, api_key: str = "", model: str = "gemini-2.0-flash", **kwargs):
-        api_key = (
-            api_key
-            or os.environ.get("GOOGLE_API_KEY", "")
-            or os.environ.get("GEMINI_API_KEY", "")
-        )
+        api_key = api_key or os.environ.get("GOOGLE_API_KEY", "") or os.environ.get("GEMINI_API_KEY", "")
         super().__init__(api_key=api_key, model=model)
         self._types: Any = None  # google.genai.types module
 
@@ -75,9 +71,7 @@ class GeminiProvider(LLMProvider):
         models = []
         for m in client.models.list():
             name = m.name
-            model_id = (
-                name.replace("models/", "") if name.startswith("models/") else name
-            )
+            model_id = name.replace("models/", "") if name.startswith("models/") else name
             display = getattr(m, "display_name", model_id)
             ctx = getattr(m, "input_token_limit", 1000000) or 1000000
             out = getattr(m, "output_token_limit", 8192) or 8192
@@ -141,30 +135,16 @@ class GeminiProvider(LLMProvider):
                 raise RateLimitError(provider="gemini") from e
             if isinstance(e, gexc.InvalidArgument):
                 msg = str(e)
-                if "token" in msg.lower() and (
-                    "limit" in msg.lower() or "exceed" in msg.lower()
-                ):
+                if "token" in msg.lower() and ("limit" in msg.lower() or "exceed" in msg.lower()):
                     raise ContextLengthError(msg, provider="gemini") from e
         except ImportError as ie:
-            log_debug(
-                f"google.api_core.exceptions unavailable, using string matching: {ie}"
-            )
+            log_debug(f"google.api_core.exceptions unavailable, using string matching: {ie}")
 
         msg = str(e)
         msg_lower = msg.lower()
-        if (
-            "api key" in msg_lower
-            or "permission" in msg_lower
-            or "unauthenticated" in msg_lower
-            or "401" in msg
-        ):
+        if "api key" in msg_lower or "permission" in msg_lower or "unauthenticated" in msg_lower or "401" in msg:
             raise AuthenticationError(provider="gemini") from e
-        if (
-            "rate limit" in msg_lower
-            or "resource exhausted" in msg_lower
-            or "quota" in msg_lower
-            or "429" in msg
-        ):
+        if "rate limit" in msg_lower or "resource exhausted" in msg_lower or "quota" in msg_lower or "429" in msg:
             raise RateLimitError(provider="gemini") from e
         if "token" in msg_lower and ("limit" in msg_lower or "exceed" in msg_lower):
             raise ContextLengthError(msg, provider="gemini") from e
@@ -269,9 +249,7 @@ class GeminiProvider(LLMProvider):
             kwargs["system_instruction"] = system
         if tools:
             kwargs["tools"] = self._build_tools(tools)
-            kwargs["automatic_function_calling"] = types.AutomaticFunctionCallingConfig(
-                disable=True
-            )
+            kwargs["automatic_function_calling"] = types.AutomaticFunctionCallingConfig(disable=True)
         return types.GenerateContentConfig(**kwargs)
 
     def _build_request_kwargs(
@@ -322,9 +300,7 @@ class GeminiProvider(LLMProvider):
                 total_tokens=getattr(um, "total_token_count", 0) or 0,
             )
 
-        msg = Message(
-            role=Role.ASSISTANT, content=text, tool_calls=tool_calls, token_usage=usage
-        )
+        msg = Message(role=Role.ASSISTANT, content=text, tool_calls=tool_calls, token_usage=usage)
         msg._raw_parts = raw_parts
         return msg
 
@@ -361,9 +337,7 @@ class GeminiProvider(LLMProvider):
                         yield StreamChunk(
                             tool_call_id=call_id,
                             tool_name=fc.name,
-                            tool_args_delta=json.dumps(
-                                dict(fc.args) if fc.args else {}
-                            ),
+                            tool_args_delta=json.dumps(dict(fc.args) if fc.args else {}),
                             is_tool_call_start=True,
                         )
                         yield StreamChunk(

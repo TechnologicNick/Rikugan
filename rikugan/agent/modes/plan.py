@@ -68,9 +68,7 @@ def _generate_plan_text(
 
     if plan_text:
         yield TurnEvent.text_done(plan_text)
-    loop.session.add_message(
-        Message(role=Role.ASSISTANT, content=plan_text, token_usage=usage)
-    )
+    loop.session.add_message(Message(role=Role.ASSISTANT, content=plan_text, token_usage=usage))
     yield TurnEvent.turn_end(1)
     return plan_text
 

@@ -47,10 +47,7 @@ def jump_to(
     ea = parse_addr_like(address)
     if navigate(ea):
         return f"Jumped to 0x{ea:x}"
-    return (
-        f"Could not navigate to 0x{ea:x}. "
-        "Ensure the Rikugan panel was opened from the active Binary Ninja UI."
-    )
+    return f"Could not navigate to 0x{ea:x}. Ensure the Rikugan panel was opened from the active Binary Ninja UI."
 
 
 @tool(category="navigation")

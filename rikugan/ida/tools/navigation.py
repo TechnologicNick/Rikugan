@@ -36,12 +36,7 @@ def get_current_function() -> str:
 
     name = ida_name.get_name(func.start_ea)
     size = func.end_ea - func.start_ea
-    return (
-        f"Name: {name}\n"
-        f"Start: 0x{func.start_ea:x}\n"
-        f"End: 0x{func.end_ea:x}\n"
-        f"Size: {size} bytes"
-    )
+    return f"Name: {name}\nStart: 0x{func.start_ea:x}\nEnd: 0x{func.end_ea:x}\nSize: {size} bytes"
 
 
 @tool(category="navigation")

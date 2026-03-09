@@ -16,9 +16,7 @@ try:
     ida_name = importlib.import_module("ida_name")
     idc = importlib.import_module("idc")
 except ImportError:
-    log_debug(
-        "IDA annotation modules not available — annotation tools will use guard checks"
-    )
+    log_debug("IDA annotation modules not available — annotation tools will use guard checks")
 
 
 @tool(category="annotations", mutating=True)
@@ -34,9 +32,7 @@ def rename_function(
         return f"No function at 0x{ea:x}"
 
     old_name = ida_name.get_name(func.start_ea)
-    ok = ida_name.set_name(
-        func.start_ea, new_name, ida_name.SN_NOWARN | ida_name.SN_NOCHECK
-    )
+    ok = ida_name.set_name(func.start_ea, new_name, ida_name.SN_NOWARN | ida_name.SN_NOCHECK)
     if ok:
         return f"Renamed 0x{func.start_ea:x}: {old_name} \u2192 {new_name}"
     return f"Failed to rename function at 0x{func.start_ea:x}"

@@ -127,13 +127,9 @@ def get_cfg(
         # Dominators
         dominators = getattr(block, "dominators", None)
         if dominators:
-            dom_addrs = sorted(
-                int(getattr(d, "start", 0)) for d in dominators if d is not block
-            )
+            dom_addrs = sorted(int(getattr(d, "start", 0)) for d in dominators if d is not block)
             if dom_addrs:
-                lines.append(
-                    f"  dominators: {', '.join(f'0x{a:x}' for a in dom_addrs)}"
-                )
+                lines.append(f"  dominators: {', '.join(f'0x{a:x}' for a in dom_addrs)}")
 
         idom = getattr(block, "immediate_dominator", None)
         if idom is not None and idom is not block:
@@ -149,9 +145,7 @@ def get_cfg(
         for src, tgt in back_edges:
             lines.append(f"  0x{src:x} -> 0x{tgt:x}")
     if loop_headers:
-        lines.append(
-            f"Loop headers: {', '.join(f'0x{h:x}' for h in sorted(loop_headers))}"
-        )
+        lines.append(f"Loop headers: {', '.join(f'0x{h:x}' for h in sorted(loop_headers))}")
     if not back_edges and not loop_headers:
         lines.append("No loops detected")
 

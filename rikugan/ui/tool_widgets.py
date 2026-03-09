@@ -361,9 +361,7 @@ def _make_preview_label() -> QLabel:
     lbl = QLabel()
     lbl.setObjectName("tool_content")
     lbl.setWordWrap(True)
-    lbl.setStyleSheet(
-        "color: #6a6a7a; font-family: monospace; font-size: 10px; margin-left: 28px;"
-    )
+    lbl.setStyleSheet("color: #6a6a7a; font-family: monospace; font-size: 10px; margin-left: 28px;")
     lbl.setVisible(False)
     return lbl
 
@@ -485,15 +483,11 @@ class ToolCallWidget(QFrame):
         header_layout.addWidget(self._bullet)
 
         self._name_label = QLabel(display_name)
-        self._name_label.setStyleSheet(
-            f"color: {color}; font-weight: bold; font-size: 11px;"
-        )
+        self._name_label.setStyleSheet(f"color: {color}; font-weight: bold; font-size: 11px;")
         header_layout.addWidget(self._name_label)
 
         self._summary_label = QLabel("")
-        self._summary_label.setStyleSheet(
-            "color: #808080; font-size: 11px; margin-left: 6px;"
-        )
+        self._summary_label.setStyleSheet("color: #808080; font-size: 11px; margin-left: 6px;")
         header_layout.addWidget(self._summary_label, 1)
 
         self._status_label = QLabel(self._SPINNER_FRAMES[0])
@@ -518,15 +512,12 @@ class ToolCallWidget(QFrame):
         self._args_label.setObjectName("tool_content")
         self._args_label.setWordWrap(True)
         self._args_label.setTextInteractionFlags(
-            Qt.TextInteractionFlag.TextSelectableByMouse
-            | Qt.TextInteractionFlag.TextSelectableByKeyboard
+            Qt.TextInteractionFlag.TextSelectableByMouse | Qt.TextInteractionFlag.TextSelectableByKeyboard
         )
         self._detail_layout.addWidget(self._args_label)
 
         self._result_header = QLabel("Result:")
-        self._result_header.setStyleSheet(
-            "color: #808080; font-size: 10px; font-weight: bold;"
-        )
+        self._result_header.setStyleSheet("color: #808080; font-size: 10px; font-weight: bold;")
         self._result_header.setVisible(False)
         self._detail_layout.addWidget(self._result_header)
 
@@ -534,8 +525,7 @@ class ToolCallWidget(QFrame):
         self._result_label.setObjectName("tool_content")
         self._result_label.setWordWrap(True)
         self._result_label.setTextInteractionFlags(
-            Qt.TextInteractionFlag.TextSelectableByMouse
-            | Qt.TextInteractionFlag.TextSelectableByKeyboard
+            Qt.TextInteractionFlag.TextSelectableByMouse | Qt.TextInteractionFlag.TextSelectableByKeyboard
         )
         self._result_label.setVisible(False)
         self._detail_layout.addWidget(self._result_label)
@@ -569,11 +559,7 @@ class ToolCallWidget(QFrame):
             self._preview_label.setText(_truncate_preview(args_text.strip()))
             self._preview_label.setVisible(not self._expanded)
         # Full args in detail area
-        display = (
-            args_text[:_MAX_ARGS_DISPLAY] + "..."
-            if len(args_text) > _MAX_ARGS_DISPLAY
-            else args_text
-        )
+        display = args_text[:_MAX_ARGS_DISPLAY] + "..." if len(args_text) > _MAX_ARGS_DISPLAY else args_text
         self._args_label.setText(display)
 
     def append_args_delta(self, delta: str) -> None:
@@ -584,18 +570,12 @@ class ToolCallWidget(QFrame):
         self._stop_spinner()
         self._result_text = result
         self._is_error = is_error
-        display = (
-            result[:_MAX_RESULT_DISPLAY] + "\n... (truncated)"
-            if len(result) > _MAX_RESULT_DISPLAY
-            else result
-        )
+        display = result[:_MAX_RESULT_DISPLAY] + "\n... (truncated)" if len(result) > _MAX_RESULT_DISPLAY else result
         self._result_label.setText(display)
         self._result_label.setVisible(True)
         self._result_header.setVisible(True)
         if is_error:
-            self._result_label.setStyleSheet(
-                "color: #f44747; font-family: monospace; font-size: 11px;"
-            )
+            self._result_label.setStyleSheet("color: #f44747; font-family: monospace; font-size: 11px;")
             self._status_label.setText("✗")
             self._status_label.setStyleSheet("color: #f44747; font-size: 10px;")
             self._bullet.setStyleSheet("color: #f44747; font-size: 10px;")
@@ -673,15 +653,11 @@ class ToolBatchWidget(QFrame):
         header_layout.addWidget(self._bullet)
 
         self._name_label = QLabel(display_name)
-        self._name_label.setStyleSheet(
-            f"color: {color}; font-weight: bold; font-size: 11px;"
-        )
+        self._name_label.setStyleSheet(f"color: {color}; font-weight: bold; font-size: 11px;")
         header_layout.addWidget(self._name_label)
 
         self._count_label = QLabel("")
-        self._count_label.setStyleSheet(
-            "color: #808080; font-size: 11px; margin-left: 6px;"
-        )
+        self._count_label.setStyleSheet("color: #808080; font-size: 11px; margin-left: 6px;")
         header_layout.addWidget(self._count_label, 1)
 
         self._status_label = QLabel("…")
@@ -749,9 +725,7 @@ class ToolBatchWidget(QFrame):
             label_text = f"#{idx + 1}: {summary}" if summary else f"#{idx + 1}"
             item.widget().setText(label_text)
 
-    def set_result_for_call(
-        self, tool_call_id: str, result: str, is_error: bool
-    ) -> None:
+    def set_result_for_call(self, tool_call_id: str, result: str, is_error: bool) -> None:
         """Record a result for one call in the batch."""
         if is_error:
             self._errors[tool_call_id] = result
@@ -763,9 +737,7 @@ class ToolBatchWidget(QFrame):
         done = len(self._results) + len(self._errors)
         if done >= self._count:
             if self._errors:
-                self._status_label.setText(
-                    f"✓{len(self._results)} ✗{len(self._errors)}"
-                )
+                self._status_label.setText(f"✓{len(self._results)} ✗{len(self._errors)}")
                 self._status_label.setStyleSheet("color: #f44747; font-size: 10px;")
             else:
                 self._status_label.setText("✓")
@@ -973,12 +945,8 @@ class _PythonHighlighter(QSyntaxHighlighter):
         ):
             rules.append((_re.compile(rf"\b{bi}\b"), bi_fmt))
         # Numbers
-        rules.append(
-            (_re.compile(r"\b0[xX][0-9a-fA-F]+\b"), _PythonHighlighter._fmt("#b5cea8"))
-        )
-        rules.append(
-            (_re.compile(r"\b\d+\.?\d*\b"), _PythonHighlighter._fmt("#b5cea8"))
-        )
+        rules.append((_re.compile(r"\b0[xX][0-9a-fA-F]+\b"), _PythonHighlighter._fmt("#b5cea8")))
+        rules.append((_re.compile(r"\b\d+\.?\d*\b"), _PythonHighlighter._fmt("#b5cea8")))
         # Strings (single/double, including f/r/b prefixes)
         str_fmt = _PythonHighlighter._fmt("#ce9178")
         rules.append((_re.compile(r'[brfu]?""".*?"""', _re.DOTALL), str_fmt))
@@ -986,15 +954,11 @@ class _PythonHighlighter(QSyntaxHighlighter):
         rules.append((_re.compile(r'[brfu]?"[^"\n]*"'), str_fmt))
         rules.append((_re.compile(r"[brfu]?'[^'\n]*'"), str_fmt))
         # Comments
-        rules.append(
-            (_re.compile(r"#[^\n]*"), _PythonHighlighter._fmt("#6a9955", italic=True))
-        )
+        rules.append((_re.compile(r"#[^\n]*"), _PythonHighlighter._fmt("#6a9955", italic=True)))
         # Decorators
         rules.append((_re.compile(r"@\w+"), _PythonHighlighter._fmt("#dcdcaa")))
         # self
-        rules.append(
-            (_re.compile(r"\bself\b"), _PythonHighlighter._fmt("#9cdcfe", italic=True))
-        )
+        rules.append((_re.compile(r"\bself\b"), _PythonHighlighter._fmt("#9cdcfe", italic=True)))
         return rules
 
     def highlightBlock(self, text: str) -> None:
@@ -1019,8 +983,7 @@ class ToolApprovalWidget(QFrame):
         super().__init__(parent)
         self.setObjectName("message_question")
         self.setStyleSheet(
-            "QFrame#message_question { border: 1px solid #dcdcaa; "
-            "border-radius: 6px; background: #2d2d1e; }"
+            "QFrame#message_question { border: 1px solid #dcdcaa; border-radius: 6px; background: #2d2d1e; }"
         )
         self._tool_call_id = tool_call_id
 
@@ -1028,17 +991,13 @@ class ToolApprovalWidget(QFrame):
         layout.setContentsMargins(8, 6, 8, 6)
 
         self._header = QLabel("Approve execute_python?")
-        self._header.setStyleSheet(
-            "color: #dcdcaa; font-weight: bold; font-size: 11px;"
-        )
+        self._header.setStyleSheet("color: #dcdcaa; font-weight: bold; font-size: 11px;")
         layout.addWidget(self._header)
 
         code = self._extract_code(args_text)
         code_lines = code.strip().splitlines() if code.strip() else []
 
-        self._info = QLabel(
-            f"Python code — {len(code_lines)} line{'s' if len(code_lines) != 1 else ''}"
-        )
+        self._info = QLabel(f"Python code — {len(code_lines)} line{'s' if len(code_lines) != 1 else ''}")
         self._info.setStyleSheet("color: #808080; font-size: 10px;")
         layout.addWidget(self._info)
 

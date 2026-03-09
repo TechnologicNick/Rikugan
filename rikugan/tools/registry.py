@@ -40,9 +40,7 @@ class ToolRegistry:
         self._dispatch_wrapper = dispatch_wrapper
 
     @staticmethod
-    def _coerce_arguments(
-        defn: ToolDefinition, arguments: dict[str, Any]
-    ) -> dict[str, Any]:
+    def _coerce_arguments(defn: ToolDefinition, arguments: dict[str, Any]) -> dict[str, Any]:
         """Coerce mistyped tool arguments to match the schema.
 
         LLMs sometimes send integers as strings (e.g. "30" instead of 30).
@@ -78,9 +76,7 @@ class ToolRegistry:
                 elif expected == "string" and not isinstance(value, str):
                     coerced[key] = str(value)
             except (ValueError, TypeError) as e:
-                log_debug(
-                    f"_coerce_arguments: coercion failed for {key!r}: {e}"
-                )  # handler will raise validation error
+                log_debug(f"_coerce_arguments: coercion failed for {key!r}: {e}")  # handler will raise validation error
 
         return coerced
 
@@ -99,9 +95,7 @@ class ToolRegistry:
         """Register all @tool-decorated functions in a module."""
         for name in dir(module):
             obj = getattr(module, name)
-            if callable(obj) and isinstance(
-                getattr(obj, "_tool_definition", None), ToolDefinition
-            ):
+            if callable(obj) and isinstance(getattr(obj, "_tool_definition", None), ToolDefinition):
                 self.register(obj._tool_definition)
 
     def unregister_by_prefix(self, prefix: str) -> int:
@@ -137,11 +131,7 @@ class ToolRegistry:
 
     def to_provider_format(self) -> list[dict[str, Any]]:
         if self._schema_cache is None:
-            self._schema_cache = [
-                t.to_provider_format()
-                for t in self._tools.values()
-                if self._available(t)
-            ]
+            self._schema_cache = [t.to_provider_format() for t in self._tools.values() if self._available(t)]
         return self._schema_cache
 
     def execute(self, name: str, arguments: dict[str, Any]) -> str:
@@ -182,9 +172,7 @@ class ToolRegistry:
         except (ToolError, ToolValidationError):
             raise
         except TypeError as e:
-            raise ToolValidationError(
-                f"Invalid arguments for {name}: {e}", tool_name=name
-            ) from e
+            raise ToolValidationError(f"Invalid arguments for {name}: {e}", tool_name=name) from e
         except Exception as e:
             raise ToolError(f"Tool {name} failed: {e}", tool_name=name) from e
 

@@ -53,9 +53,7 @@ class ProviderRegistry:
         """Create a new provider instance."""
         cls = self._providers.get(name)
         if cls is None:
-            raise ProviderError(
-                f"Unknown provider: {name}. Available: {self.list_providers()}"
-            )
+            raise ProviderError(f"Unknown provider: {name}. Available: {self.list_providers()}")
 
         # Custom OpenAI-compatible providers need their name passed through
         if cls is OpenAICompatProvider and name != "openai_compat":
@@ -82,15 +80,11 @@ class ProviderRegistry:
             key_changed = api_key != inst.api_key
             base_changed = api_base != (inst.api_base or "")
             if key_changed or base_changed:
-                return self.create(
-                    name, api_key=api_key, api_base=api_base, model=model, **kwargs
-                )
+                return self.create(name, api_key=api_key, api_base=api_base, model=model, **kwargs)
             if model and inst.model != model:
                 inst.model = model
             return inst
-        return self.create(
-            name, api_key=api_key, api_base=api_base, model=model, **kwargs
-        )
+        return self.create(name, api_key=api_key, api_base=api_base, model=model, **kwargs)
 
     def get_instance(self, name: str) -> LLMProvider | None:
         return self._instances.get(name)

@@ -96,9 +96,7 @@ def _check_ast(code: str) -> str | None:
                 if pair in _BLOCKED_ATTRS:
                     return f"Blocked — call to disallowed '{pair[0]}.{pair[1]}()'"
                 # Catch os.exec*/os.spawn* variants not explicitly listed
-                if func.value.id == "os" and (
-                    func.attr.startswith("exec") or func.attr.startswith("spawn")
-                ):
+                if func.value.id == "os" and (func.attr.startswith("exec") or func.attr.startswith("spawn")):
                     return f"Blocked — call to disallowed 'os.{func.attr}()'"
 
         # Block: subscript access to __builtins__ (e.g. __builtins__['__import__'])
@@ -114,9 +112,7 @@ def _check_ast(code: str) -> str | None:
     return None
 
 
-def run_guarded_script(
-    code: str, namespace_factory: Callable[[], dict[str, Any]]
-) -> str:
+def run_guarded_script(code: str, namespace_factory: Callable[[], dict[str, Any]]) -> str:
     """Block dangerous patterns, exec code, and return captured stdout/stderr."""
     violation = _check_ast(code)
     if violation:

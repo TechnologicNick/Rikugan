@@ -19,9 +19,7 @@ class MCPToolSchema:
     input_schema: dict[str, Any] = field(default_factory=dict)
 
 
-def encode_jsonrpc_request(
-    method: str, params: dict[str, Any] | None = None, id: int = 1
-) -> bytes:
+def encode_jsonrpc_request(method: str, params: dict[str, Any] | None = None, id: int = 1) -> bytes:
     """Encode a JSON-RPC 2.0 request with Content-Length framing."""
     body = {
         "jsonrpc": "2.0",

@@ -44,9 +44,7 @@ class ToolResultCache:
                 sorted(
                     (
                         k,
-                        v
-                        if isinstance(v, (str, int, float, bool, type(None)))
-                        else str(v),
+                        v if isinstance(v, (str, int, float, bool, type(None))) else str(v),
                     )
                     for k, v in arguments.items()
                 )

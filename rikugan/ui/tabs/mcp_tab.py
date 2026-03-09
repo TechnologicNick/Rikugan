@@ -23,9 +23,7 @@ if TYPE_CHECKING:
 class MCPTab(QWidget):
     """Tab for managing MCP servers: Rikugan configured + external MCP."""
 
-    def __init__(
-        self, config: RikuganConfig, service: SettingsService, parent: QWidget = None
-    ):
+    def __init__(self, config: RikuganConfig, service: SettingsService, parent: QWidget = None):
         super().__init__(parent)
         self._config = config
         self._service = service
@@ -72,9 +70,7 @@ class MCPTab(QWidget):
 
         return group
 
-    def _build_external_group(
-        self, source_key: str, servers: list[MCPServerConfig]
-    ) -> QGroupBox:
+    def _build_external_group(self, source_key: str, servers: list[MCPServerConfig]) -> QGroupBox:
         """Build a group box for external MCP servers from one source."""
         if source_key == "claude":
             title = "Claude Code MCP Servers"
@@ -114,8 +110,6 @@ class MCPTab(QWidget):
             self._service.save_mcp_servers(self._rikugan_servers)
 
         # Enabled external MCP (checked = enabled)
-        config.enabled_external_mcp = [
-            ext_id for ext_id, cb in self._external_checks.items() if cb.isChecked()
-        ]
+        config.enabled_external_mcp = [ext_id for ext_id, cb in self._external_checks.items() if cb.isChecked()]
 
         log_debug(f"MCP config: {len(config.enabled_external_mcp)} external enabled")

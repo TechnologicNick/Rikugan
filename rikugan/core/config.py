@@ -48,16 +48,10 @@ class RikuganConfig:
     auto_context: bool = True
     plan_mode_default: bool = False
     checkpoint_auto_save: bool = True
-    approve_mutations: bool = (
-        False  # require approval for mutating tools (rename, retype, etc.)
-    )
-    exploration_turn_limit: int = (
-        30  # max turns in exploration phase before forcing transition
-    )
+    approve_mutations: bool = False  # require approval for mutating tools (rename, retype, etc.)
+    exploration_turn_limit: int = 30  # max turns in exploration phase before forcing transition
     max_retries: int = 3  # max retries on rate-limit / transient API errors
-    silent_retry_mode: bool = (
-        False  # show loading indicator instead of error messages on retry
-    )
+    silent_retry_mode: bool = False  # show loading indicator instead of error messages on retry
     theme: str = "dark"
 
     # Skills & MCP external integration
@@ -91,17 +85,11 @@ class RikuganConfig:
         """Validate config values. Returns list of error messages (empty = valid)."""
         errors: list[str] = []
         if not (0.0 <= self.provider.temperature <= 2.0):
-            errors.append(
-                f"temperature {self.provider.temperature} out of range [0, 2]"
-            )
+            errors.append(f"temperature {self.provider.temperature} out of range [0, 2]")
         if self.provider.max_tokens <= 0:
-            errors.append(
-                f"max_tokens must be positive, got {self.provider.max_tokens}"
-            )
+            errors.append(f"max_tokens must be positive, got {self.provider.max_tokens}")
         if self.provider.context_window <= 0:
-            errors.append(
-                f"context_window must be positive, got {self.provider.context_window}"
-            )
+            errors.append(f"context_window must be positive, got {self.provider.context_window}")
         if not (1 <= self.max_retries <= 10):
             errors.append(f"max_retries {self.max_retries} out of range [1, 10]")
         if not self.active_profile or not isinstance(self.active_profile, str):
@@ -193,9 +181,7 @@ class RikuganConfig:
             self.provider.api_base = saved.get("api_base", "")
             self.provider.temperature = saved.get("temperature", DEFAULT_TEMPERATURE)
             self.provider.max_tokens = saved.get("max_tokens", DEFAULT_MAX_TOKENS)
-            self.provider.context_window = saved.get(
-                "context_window", DEFAULT_CONTEXT_WINDOW
-            )
+            self.provider.context_window = saved.get("context_window", DEFAULT_CONTEXT_WINDOW)
         else:
             # Fresh provider — clear key/base, keep defaults
             self.provider.api_key = ""

@@ -43,9 +43,7 @@ def parse_addr_like(value: Any) -> int:
     return int(str(value), 0)
 
 
-def call_compat(
-    obj: Any, *method_names: str, default: Any = None, **kwargs: Any
-) -> Any:
+def call_compat(obj: Any, *method_names: str, default: Any = None, **kwargs: Any) -> Any:
     """Call first existing method name on *obj*, returning default on failure."""
     for name in method_names:
         meth = getattr(obj, name, None)
@@ -59,9 +57,7 @@ def call_compat(
                 try:
                     return meth(*kwargs.values())
                 except Exception as _e:
-                    log_debug(
-                        f"call_compat positional fallback failed for {name}: {_e}"
-                    )
+                    log_debug(f"call_compat positional fallback failed for {name}: {_e}")
                     continue
         except Exception as _e:
             log_debug(f"call_compat failed for {name}: {_e}")
@@ -117,9 +113,6 @@ def py_signature_accepts(func: Any, argc: int) -> bool:
         return False
     params = list(sig.parameters.values())
     required = [
-        p
-        for p in params
-        if p.default is inspect._empty
-        and p.kind in (p.POSITIONAL_ONLY, p.POSITIONAL_OR_KEYWORD)
+        p for p in params if p.default is inspect._empty and p.kind in (p.POSITIONAL_ONLY, p.POSITIONAL_OR_KEYWORD)
     ]
     return len(required) <= argc <= len(params)

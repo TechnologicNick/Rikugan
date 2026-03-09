@@ -128,10 +128,7 @@ def get_il(
     start = int(getattr(func, "start", ea))
     end = int(getattr(func, "highest_address", start))
     resolved = _IL_LEVELS.get(lvl, lvl)
-    header = (
-        f"=== IL for {get_function_name(func)} at {resolved} ===\n"
-        f"Function: 0x{start:x} - 0x{end:x}\n"
-    )
+    header = f"=== IL for {get_function_name(func)} at {resolved} ===\nFunction: 0x{start:x} - 0x{end:x}\n"
     return header + _render_il(il)
 
 
@@ -190,8 +187,7 @@ def nop_instructions(
     func_address: Annotated[str, "Address of the function to patch"],
     instruction_addresses: Annotated[
         str,
-        "Comma-separated hex addresses of instructions to NOP "
-        "(e.g. '0x401004,0x401008,0x40100c')",
+        "Comma-separated hex addresses of instructions to NOP (e.g. '0x401004,0x401008,0x40100c')",
     ],
 ) -> str:
     """Patch selected instructions to NOP bytes and update analysis."""

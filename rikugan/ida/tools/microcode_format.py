@@ -54,8 +54,7 @@ def parse_maturity(name: str) -> int:
     if val is not None and 0 <= val <= 7:
         return val
     raise ToolError(
-        f"Unknown maturity level: {name!r}. "
-        f"Valid levels: {', '.join(_MATURITY_LEVELS.keys())}",
+        f"Unknown maturity level: {name!r}. Valid levels: {', '.join(_MATURITY_LEVELS.keys())}",
         tool_name="microcode",
     )
 
@@ -87,11 +86,7 @@ def format_block(blk, include_insns: bool = True) -> str:
     except AttributeError as e:
         log_debug(f"format_block blk.type unavailable: {e}")
 
-    hdr = (
-        f"--- Block {blk.serial} "
-        f"[{blk.start:#x}..{blk.end:#x}]"
-        f" preds={preds} succs={succs}{blk_type} ---"
-    )
+    hdr = f"--- Block {blk.serial} [{blk.start:#x}..{blk.end:#x}] preds={preds} succs={succs}{blk_type} ---"
 
     if not include_insns:
         return hdr
@@ -214,9 +209,7 @@ if _HAS_HEXRAYS:
         ida_hexrays.mop_v: lambda op: f"global addr={op.g:#x} size={op.size}",
         ida_hexrays.mop_b: lambda op: f"block @{op.b}",
         ida_hexrays.mop_f: lambda op: f"callinfo size={op.size}",
-        ida_hexrays.mop_l: lambda op: (
-            f"local idx={op.l.idx} off={op.l.off:#x} size={op.size}"
-        ),
+        ida_hexrays.mop_l: lambda op: f"local idx={op.l.idx} off={op.l.off:#x} size={op.size}",
         ida_hexrays.mop_a: lambda op: f"addr_of size={op.size}",
         ida_hexrays.mop_h: lambda op: f"helper '{op.helper}' size={op.size}",
         ida_hexrays.mop_str: lambda op: f"string '{op.cstr}' size={op.size}",

@@ -65,9 +65,7 @@ def idasync(func: F) -> F:
                 _log(f"idasync: {fname} on main thread — direct call")
                 return func(*args, **kwargs)
 
-            _log(
-                f"idasync: {fname} on {threading.current_thread().name} — execute_sync START"
-            )
+            _log(f"idasync: {fname} on {threading.current_thread().name} — execute_sync START")
             result_holder: list = []
             error_holder: list = []
 
@@ -95,14 +93,10 @@ def idasync(func: F) -> F:
 
             exec_wait = getattr(bn_mainthread, "execute_on_main_thread_and_wait", None)
             if not callable(exec_wait):
-                _log(
-                    f"bnsync: {fname} no execute_on_main_thread_and_wait — direct call fallback"
-                )
+                _log(f"bnsync: {fname} no execute_on_main_thread_and_wait — direct call fallback")
                 return func(*args, **kwargs)
 
-            _log(
-                f"bnsync: {fname} on {threading.current_thread().name} — execute_on_main_thread_and_wait START"
-            )
+            _log(f"bnsync: {fname} on {threading.current_thread().name} — execute_on_main_thread_and_wait START")
             result_holder: list = []  # type: ignore[no-redef]
             error_holder: list = []  # type: ignore[no-redef]
 
@@ -127,9 +121,7 @@ def idasync(func: F) -> F:
     return wrapper  # type: ignore[return-value]
 
 
-def run_in_background(
-    func: Callable[..., Any], *args: Any, **kwargs: Any
-) -> threading.Thread:
+def run_in_background(func: Callable[..., Any], *args: Any, **kwargs: Any) -> threading.Thread:
     """Run *func* in a daemon background thread."""
     thread = threading.Thread(target=func, args=args, kwargs=kwargs, daemon=True)
     thread.start()

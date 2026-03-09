@@ -98,9 +98,7 @@ def get_function_info(address: Annotated[str, "Function address (hex string)"]) 
     callers = _collect_callers(func)[:10]
     callees = _collect_callees(func)[:10]
 
-    return format_function_summary(
-        get_function_name(func), start, end, size, blocks, instrs, callers, callees
-    )
+    return format_function_summary(get_function_name(func), start, end, size, blocks, instrs, callers, callees)
 
 
 @tool(category="functions")

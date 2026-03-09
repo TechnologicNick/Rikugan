@@ -230,8 +230,7 @@ class RikuganPanelCore(QWidget):
         super().__init__(parent)
         self._config = RikuganConfig.load_or_create()
         log_debug(
-            f"Config loaded: provider={self._config.provider.name} "
-            f"model={self._config.provider.model}",
+            f"Config loaded: provider={self._config.provider.name} model={self._config.provider.model}",
         )
         self._ctrl = controller_factory(self._config)
         self._poll_timer: QTimer | None = None
@@ -520,15 +519,10 @@ class RikuganPanelCore(QWidget):
                 "QCheckBox { color: #d4d4d4; font-size: 12px; }"
             )
             layout = QVBoxLayout(dlg)
-            cb = QCheckBox(
-                f"Include subagent logs ({len(session.subagent_logs)} subagent runs)"
-            )
+            cb = QCheckBox(f"Include subagent logs ({len(session.subagent_logs)} subagent runs)")
             cb.setChecked(True)
             layout.addWidget(cb)
-            buttons = QDialogButtonBox(
-                QDialogButtonBox.StandardButton.Ok
-                | QDialogButtonBox.StandardButton.Cancel
-            )
+            buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
             buttons.accepted.connect(dlg.accept)
             buttons.rejected.connect(dlg.reject)
             layout.addWidget(buttons)
@@ -547,9 +541,7 @@ class RikuganPanelCore(QWidget):
         if not path:
             return
         try:
-            self._export_session_to_file(
-                session, path, include_subagents=include_subagents
-            )
+            self._export_session_to_file(session, path, include_subagents=include_subagents)
             log_info(f"Exported chat to {path}")
         except Exception as e:
             log_error(f"Failed to export chat: {e}")
@@ -700,11 +692,7 @@ class RikuganPanelCore(QWidget):
         """Called when the user opens a different file."""
         if self._is_shutdown:
             return
-        normalized = (
-            os.path.normcase(os.path.realpath(os.path.abspath(new_path)))
-            if new_path
-            else ""
-        )
+        normalized = os.path.normcase(os.path.realpath(os.path.abspath(new_path))) if new_path else ""
         if normalized == self._ctrl._idb_path:
             return
         self._ctrl.reset_for_new_file(normalized)
@@ -777,9 +765,7 @@ class RikuganPanelCore(QWidget):
                 self._ctrl.reload_mcp()
                 if self._context_bar is not None:
                     self._context_bar.set_model(self._config.provider.model)
-                log_info(
-                    f"Settings updated: {self._config.provider.name}/{self._config.provider.model}"
-                )
+                log_info(f"Settings updated: {self._config.provider.name}/{self._config.provider.model}")
             dlg.setParent(None)
         except Exception as e:
             log_error(f"Settings dialog error: {e}")
@@ -874,11 +860,7 @@ class RikuganPanelCore(QWidget):
             # Use prompt_tokens from the event directly — session hasn't
             # been updated yet during streaming, so session.last_prompt_tokens
             # would be stale.  prompt_tokens reflects current context size.
-            token_count = (
-                event.usage.context_tokens
-                if event.usage.context_tokens > 0
-                else event.usage.total_tokens
-            )
+            token_count = event.usage.context_tokens if event.usage.context_tokens > 0 else event.usage.total_tokens
             if token_count > 0:
                 self._update_token_display(token_count)
         if event.type in (
@@ -891,12 +873,8 @@ class RikuganPanelCore(QWidget):
             # predefined options MUST be answered via buttons only.
             # Disable text input so free-text ("continue", "redo", etc.)
             # cannot bypass the approval gate.
-            has_options = (
-                bool(event.metadata.get("options")) if event.metadata else False
-            )
-            allow_text = (
-                bool(event.metadata.get("allow_text")) if event.metadata else False
-            )
+            has_options = bool(event.metadata.get("options")) if event.metadata else False
+            allow_text = bool(event.metadata.get("allow_text")) if event.metadata else False
             needs_button = event.type in (
                 TurnEventType.PLAN_GENERATED,
                 TurnEventType.SAVE_APPROVAL_REQUEST,
@@ -1023,9 +1001,7 @@ class RikuganPanelCore(QWidget):
         # running — UNLESS we're waiting for a button-only approval.
         if self._awaiting_button_approval:
             self._input_area.set_enabled(False)
-            self._input_area.setPlaceholderText(
-                "Use the Approve/Reject buttons above to continue."
-            )
+            self._input_area.setPlaceholderText("Use the Approve/Reject buttons above to continue.")
         else:
             self._input_area.set_enabled(True)
             if running:
@@ -1033,9 +1009,7 @@ class RikuganPanelCore(QWidget):
                     "Rikugan is thinking... press Enter (or Queue) to queue a follow-up."
                 )
             else:
-                self._input_area.setPlaceholderText(
-                    "Ask about this binary... (/ for skills, /modify to patch)"
-                )
+                self._input_area.setPlaceholderText("Ask about this binary... (/ for skills, /modify to patch)")
 
         self._send_btn.setVisible(True)
         self._send_btn.setEnabled(not self._awaiting_button_approval)

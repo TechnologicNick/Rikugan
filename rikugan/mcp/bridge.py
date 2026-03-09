@@ -50,9 +50,7 @@ def _make_mcp_handler(client: MCPClient, tool_name: str) -> Callable:
     return handler
 
 
-def register_mcp_tools(
-    client: MCPClient, registry: ToolRegistry, prefix: str = ""
-) -> int:
+def register_mcp_tools(client: MCPClient, registry: ToolRegistry, prefix: str = "") -> int:
     """Register all tools from an MCP client into the Rikugan ToolRegistry.
 
     Returns the number of tools registered.

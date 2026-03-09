@@ -103,9 +103,7 @@ _BUILTIN_PROFILES: dict[str, AnalysisProfile] = {
 # ---------------------------------------------------------------------------
 
 
-def get_profile(
-    name: str, custom_profiles: dict[str, dict] | None = None
-) -> AnalysisProfile:
+def get_profile(name: str, custom_profiles: dict[str, dict] | None = None) -> AnalysisProfile:
     """Look up a profile by name.
 
     Checks built-in profiles first, then custom profiles from config.

@@ -254,9 +254,7 @@ def _modify_struct_ida9(
         if pad_size == 1:
             ida_typeinf.parse_decl(pad_tif, None, "char;", ida_typeinf.PT_SIL)
         else:
-            ida_typeinf.parse_decl(
-                pad_tif, None, f"char[{pad_size}];", ida_typeinf.PT_SIL
-            )
+            ida_typeinf.parse_decl(pad_tif, None, f"char[{pad_size}];", ida_typeinf.PT_SIL)
         udm = ida_typeinf.udm_t()
         udm.name = f"_padding_{current:x}"
         udm.type = pad_tif
@@ -292,9 +290,7 @@ def _get_struct_info_ida9(name: str) -> str:
             mtype = str(udm.type)
             cmt = getattr(udm, "cmt", "") or ""
             cmt_str = f"  ; {cmt}" if cmt else ""
-            lines.append(
-                f"  +0x{offset_bytes:04x}  {mtype:24s} {mname:24s} ({size_bytes} bytes){cmt_str}"
-            )
+            lines.append(f"  +0x{offset_bytes:04x}  {mtype:24s} {mname:24s} ({size_bytes} bytes){cmt_str}")
     except (AttributeError, Exception):
         # Fallback to get_udt_details
         udt = ida_typeinf.udt_type_data_t()
@@ -309,9 +305,7 @@ def _get_struct_info_ida9(name: str) -> str:
             mtype = str(udm.type)
             cmt = getattr(udm, "cmt", "") or ""
             cmt_str = f"  ; {cmt}" if cmt else ""
-            lines.append(
-                f"  +0x{offset_bytes:04x}  {mtype:24s} {mname:24s} ({size_bytes} bytes){cmt_str}"
-            )
+            lines.append(f"  +0x{offset_bytes:04x}  {mtype:24s} {mname:24s} ({size_bytes} bytes){cmt_str}")
 
     return "\n".join(lines)
 
@@ -378,9 +372,7 @@ def _propagate_type_ida9(struct_name: str) -> str:
 @tool(category="types", mutating=True)
 def create_struct(
     name: Annotated[str, "Struct name"],
-    fields: Annotated[
-        str, "JSON array of fields: [{name, type, offset?, comment?}, ...]"
-    ],
+    fields: Annotated[str, "JSON array of fields: [{name, type, offset?, comment?}, ...]"],
 ) -> str:
     """Create a new struct with typed fields."""
     field_list = json.loads(fields)
@@ -445,9 +437,7 @@ def modify_struct(
         # IDA 9.x path
         if ida_typeinf is None:
             return "ida_typeinf not available"
-        return _modify_struct_ida9(
-            name, action, field_name, new_name, field_type, offset, comment, new_size
-        )
+        return _modify_struct_ida9(name, action, field_name, new_name, field_type, offset, comment, new_size)
 
     # IDA 8.x path
     sid = ida_struct.get_struc_id(name)
@@ -491,9 +481,7 @@ def modify_struct(
         tif = ida_typeinf.tinfo_t()
         if ida_typeinf.parse_decl(tif, None, f"{field_type};", ida_typeinf.PT_SIL):
             ok = ida_struct.set_member_tinfo(sptr, memb, 0, tif, 0)
-            return (
-                f"Retyped '{field_name}' to '{field_type}'" if ok else "Retype failed"
-            )
+            return f"Retyped '{field_name}' to '{field_type}'" if ok else "Retype failed"
         return f"Failed to parse type '{field_type}'"
 
     elif action == "set_field_comment":
@@ -554,9 +542,7 @@ def get_struct_info(name: Annotated[str, "Struct name"]) -> str:
 
         cmt = ida_struct.get_member_cmt(memb, False) or ""
         cmt_str = f"  ; {cmt}" if cmt else ""
-        lines.append(
-            f"  +0x{moff:04x}  {tname:24s} {mname:24s} ({msize} bytes){cmt_str}"
-        )
+        lines.append(f"  +0x{moff:04x}  {tname:24s} {mname:24s} ({msize} bytes){cmt_str}")
 
     return "\n".join(lines)
 
@@ -656,9 +642,7 @@ def modify_enum(
 
     if action == "add_member":
         err = _enum_mod.add_enum_member(eid, member_name, value, -1)
-        return (
-            f"Added '{member_name}' = {value}" if err == 0 else f"Failed (error {err})"
-        )
+        return f"Added '{member_name}' = {value}" if err == 0 else f"Failed (error {err})"
     elif action == "remove_member":
         if ida_enum is not None:
             cid = ida_enum.get_enum_member_by_name(member_name)
@@ -676,11 +660,7 @@ def modify_enum(
             if cid == idc.BADADDR:
                 return f"Member '{member_name}' not found"
             ok = ida_enum.set_enum_member_name(cid, new_name)
-            return (
-                f"Renamed '{member_name}' \u2192 '{new_name}'"
-                if ok
-                else "Rename failed"
-            )
+            return f"Renamed '{member_name}' \u2192 '{new_name}'" if ok else "Rename failed"
         # IDA 9.x: use idc wrapper
         cid = idc.get_enum_member(eid, 0, 0, -1)  # need to find by name
         return "rename_member via idc not fully supported \u2014 use execute_python"
@@ -927,9 +907,7 @@ def apply_type_to_variable(
 @tool(category="types", mutating=True)
 def set_function_prototype(
     address: Annotated[str, "Function address (hex string)"],
-    prototype: Annotated[
-        str, "Full C prototype (e.g. 'int __fastcall foo(void* ctx, int len)')"
-    ],
+    prototype: Annotated[str, "Full C prototype (e.g. 'int __fastcall foo(void* ctx, int len)')"],
 ) -> str:
     """Set a function's full calling convention and prototype."""
     if idc is None:
@@ -989,9 +967,7 @@ def suggest_struct_from_accesses(
     total_size = 0
     for off, (size, count) in sorted_offsets:
         tname = size_type_map.get(size, f"char[{size}]")
-        lines.append(
-            f"  +0x{off:04x}  {tname:16s} field_{off:x};    // accessed {count}x"
-        )
+        lines.append(f"  +0x{off:04x}  {tname:16s} field_{off:x};    // accessed {count}x")
         total_size = max(total_size, off + size)
 
     lines.append(f"\nEstimated struct size: {total_size} (0x{total_size:x}) bytes")
@@ -1038,9 +1014,7 @@ def propagate_type(
         ida_auto.auto_wait()
         return f"Triggered type propagation for '{struct_name}'"
 
-    return (
-        f"Type propagation requested for '{struct_name}' (manual refresh may be needed)"
-    )
+    return f"Type propagation requested for '{struct_name}' (manual refresh may be needed)"
 
 
 @tool(category="types")

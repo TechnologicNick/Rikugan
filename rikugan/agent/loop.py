@@ -318,9 +318,7 @@ class AgentLoop:
         self.session = session
         self.skills = skill_registry
         self.host_name = host_name
-        self._cancelled: threading.Event = (
-            parent_loop._cancelled if parent_loop else threading.Event()
-        )
+        self._cancelled: threading.Event = parent_loop._cancelled if parent_loop else threading.Event()
         self._running: bool = False
         self._consecutive_errors: int = 0
         self._tools_disabled_for_turn: bool = False
@@ -332,9 +330,7 @@ class AgentLoop:
         self._tool_approval_queue: queue.Queue[str] = (
             parent_loop._tool_approval_queue if parent_loop else queue.Queue(maxsize=1)
         )
-        self._always_allow_scripts: bool = (
-            parent_loop._always_allow_scripts if parent_loop else False
-        )
+        self._always_allow_scripts: bool = parent_loop._always_allow_scripts if parent_loop else False
         self.plan_mode = False
 
         # Context window manager — compacts history when approaching limits
@@ -456,9 +452,7 @@ class AgentLoop:
         if skill is not None:
             log_debug(f"AgentLoop: skill invocation /{skill.slug}")
             rewritten = (
-                f"[Skill: {skill.name}]\n"
-                f"{sanitize_skill_body(skill.body, skill.name)}\n\n"
-                f"User request: {remaining}"
+                f"[Skill: {skill.name}]\n{sanitize_skill_body(skill.body, skill.name)}\n\nUser request: {remaining}"
             )
             return (rewritten, skill)
 
@@ -467,9 +461,7 @@ class AgentLoop:
         if skill is not None:
             log_debug(f"AgentLoop: trigger-matched skill /{skill.slug}")
             rewritten = (
-                f"[Skill: {skill.name}]\n"
-                f"{sanitize_skill_body(skill.body, skill.name)}\n\n"
-                f"User request: {user_message}"
+                f"[Skill: {skill.name}]\n{sanitize_skill_body(skill.body, skill.name)}\n\nUser request: {user_message}"
             )
             return (rewritten, skill)
 
@@ -486,9 +478,7 @@ class AgentLoop:
         if self.session.idb_path:
             idb_dir = os.path.dirname(self.session.idb_path)
         if not idb_dir:
-            yield TurnEvent.text_done(
-                "No IDB/BNDB path set — persistent memory is not available."
-            )
+            yield TurnEvent.text_done("No IDB/BNDB path set — persistent memory is not available.")
             return
 
         md_path = os.path.join(idb_dir, "RIKUGAN.md")
@@ -506,9 +496,7 @@ class AgentLoop:
             if not content.strip():
                 yield TurnEvent.text_done("RIKUGAN.md exists but is empty.")
             else:
-                yield TurnEvent.text_done(
-                    f"**Persistent Memory** (`{md_path}`):\n\n{content}"
-                )
+                yield TurnEvent.text_done(f"**Persistent Memory** (`{md_path}`):\n\n{content}")
         except OSError as e:
             yield TurnEvent.error_event(f"Failed to read RIKUGAN.md: {e}")
 
@@ -521,9 +509,7 @@ class AgentLoop:
             try:
                 count = int(parts[1])
             except ValueError:
-                yield TurnEvent.error_event(
-                    f"Invalid undo count: {parts[1]}. Usage: /undo [N]"
-                )
+                yield TurnEvent.error_event(f"Invalid undo count: {parts[1]}. Usage: /undo [N]")
                 return
 
         if not self._mutation_log:
@@ -551,9 +537,7 @@ class AgentLoop:
             parts_out.append(f"Undid {undone} mutation(s).")
         if errors:
             parts_out.append("\n".join(errors))
-        yield TurnEvent.text_done(
-            "\n".join(parts_out) if parts_out else "Nothing undone."
-        )
+        yield TurnEvent.text_done("\n".join(parts_out) if parts_out else "Nothing undone.")
 
     def _handle_mcp_command(self) -> Generator[TurnEvent, None, None]:
         """Show MCP server health and status."""
@@ -586,9 +570,7 @@ class AgentLoop:
 
         # Check provider
         if self.provider:
-            ok.append(
-                f"Provider: {self.config.provider.name} ({self.config.provider.model})"
-            )
+            ok.append(f"Provider: {self.config.provider.name} ({self.config.provider.model})")
         else:
             issues.append("No LLM provider configured")
 
@@ -596,9 +578,7 @@ class AgentLoop:
         if self.config.provider.api_key:
             ok.append("API key: configured")
         else:
-            env_key = os.environ.get("ANTHROPIC_API_KEY") or os.environ.get(
-                "OPENAI_API_KEY"
-            )
+            env_key = os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("OPENAI_API_KEY")
             if env_key:
                 ok.append("API key: from environment variable")
             else:
@@ -683,29 +663,22 @@ class AgentLoop:
         for attempt in range(max_retries):
             self._check_cancelled()
             try:
-                result = yield from self._stream_llm_turn_inner(
-                    system_prompt, tools_schema
-                )
+                result = yield from self._stream_llm_turn_inner(system_prompt, tools_schema)
                 return result
             except (RateLimitError, ProviderError) as e:
                 is_rate_limit = isinstance(e, RateLimitError)
-                if not is_rate_limit and not (
-                    e.retryable and attempt < max_retries - 1
-                ):
+                if not is_rate_limit and not (e.retryable and attempt < max_retries - 1):
                     raise
                 last_error = e
                 log_error(f"Retryable error (attempt {attempt + 1}/{max_retries}): {e}")
                 if attempt < max_retries - 1:
                     if is_rate_limit:
-                        backoff = (
-                            e.retry_after if e.retry_after > 0 else min(2**attempt, 10)
-                        )
+                        backoff = e.retry_after if e.retry_after > 0 else min(2**attempt, 10)
                     else:
                         backoff = min(2**attempt, 10)
                     if silent_mode:
                         yield TurnEvent.error_event(
-                            f"\u23f3 Retrying in {backoff:.0f}s "
-                            f"(attempt {attempt + 2}/{max_retries})..."
+                            f"\u23f3 Retrying in {backoff:.0f}s (attempt {attempt + 2}/{max_retries})..."
                         )
                     else:
                         yield TurnEvent.error_event(
@@ -752,27 +725,19 @@ class AgentLoop:
                 )
             )
 
-    def _prepare_provider_messages(
-        self, system_prompt: str
-    ) -> tuple[list, int, TokenUsage | None]:
+    def _prepare_provider_messages(self, system_prompt: str) -> tuple[list, int, TokenUsage | None]:
         """Estimate tokens, compact context if needed, return (provider_messages, estimated_tokens, estimated_usage)."""
         # Fast path: use running token counter to skip expensive O(n)
         # estimation when we're clearly below the compaction threshold.
         fast_estimate = self.session.token_estimate
-        if fast_estimate > 0 and fast_estimate < int(
-            self._context_manager.max_tokens * 0.5
-        ):
+        if fast_estimate > 0 and fast_estimate < int(self._context_manager.max_tokens * 0.5):
             # Well below threshold — skip full estimation for compaction
             pass
         else:
             # Estimate full in-memory context so compaction decisions work
             # even when provider streaming usage is missing.
-            full_messages = minify_messages(
-                self.session.get_messages_for_provider(context_window=0)
-            )
-            full_prompt_tokens = self._estimate_prompt_tokens(
-                full_messages, system_prompt
-            )
+            full_messages = minify_messages(self.session.get_messages_for_provider(context_window=0))
+            full_prompt_tokens = self._estimate_prompt_tokens(full_messages, system_prompt)
             if full_prompt_tokens > 0:
                 self._context_manager.update_usage(
                     TokenUsage(
@@ -782,22 +747,15 @@ class AgentLoop:
                 )
 
         if self._context_manager.should_compact():
-            log_info(
-                f"Context compaction triggered (usage ratio: "
-                f"{self._context_manager.usage_ratio:.1%})"
-            )
+            log_info(f"Context compaction triggered (usage ratio: {self._context_manager.usage_ratio:.1%})")
             with self.session._lock:
                 self.session.messages[:] = self._context_manager.compact_messages(
                     self.session.messages,
                 )
 
         ctx_window = self.config.provider.context_window
-        provider_messages = minify_messages(
-            self.session.get_messages_for_provider(context_window=ctx_window)
-        )
-        estimated_prompt_tokens = self._estimate_prompt_tokens(
-            provider_messages, system_prompt
-        )
+        provider_messages = minify_messages(self.session.get_messages_for_provider(context_window=ctx_window))
+        estimated_prompt_tokens = self._estimate_prompt_tokens(provider_messages, system_prompt)
         estimated_usage: TokenUsage | None = None
         if estimated_prompt_tokens > 0:
             estimated_usage = TokenUsage(
@@ -807,17 +765,13 @@ class AgentLoop:
             self._context_manager.update_usage(estimated_usage)
         return provider_messages, estimated_prompt_tokens, estimated_usage
 
-    def _accumulate_chunk_usage(
-        self, last: TokenUsage | None, chunk: TokenUsage
-    ) -> TokenUsage:
+    def _accumulate_chunk_usage(self, last: TokenUsage | None, chunk: TokenUsage) -> TokenUsage:
         """Merge a streaming chunk's usage into the accumulated total."""
         if last is None:
             return TokenUsage(
                 prompt_tokens=chunk.prompt_tokens,
                 completion_tokens=chunk.completion_tokens,
-                total_tokens=(
-                    chunk.total_tokens or chunk.prompt_tokens + chunk.completion_tokens
-                ),
+                total_tokens=(chunk.total_tokens or chunk.prompt_tokens + chunk.completion_tokens),
                 cache_read_tokens=chunk.cache_read_tokens,
                 cache_creation_tokens=chunk.cache_creation_tokens,
             )
@@ -825,15 +779,9 @@ class AgentLoop:
         return TokenUsage(
             prompt_tokens=last.prompt_tokens + chunk.prompt_tokens,
             completion_tokens=last.completion_tokens + chunk.completion_tokens,
-            total_tokens=(
-                last.prompt_tokens
-                + chunk.prompt_tokens
-                + last.completion_tokens
-                + chunk.completion_tokens
-            ),
+            total_tokens=(last.prompt_tokens + chunk.prompt_tokens + last.completion_tokens + chunk.completion_tokens),
             cache_read_tokens=last.cache_read_tokens + chunk.cache_read_tokens,
-            cache_creation_tokens=last.cache_creation_tokens
-            + chunk.cache_creation_tokens,
+            cache_creation_tokens=last.cache_creation_tokens + chunk.cache_creation_tokens,
         )
 
     def _finalize_stream_usage(
@@ -878,9 +826,7 @@ class AgentLoop:
         last_usage: TokenUsage | None = None
         raw_parts: Any = None
 
-        provider_messages, estimated_prompt_tokens, estimated_usage = (
-            self._prepare_provider_messages(system_prompt)
-        )
+        provider_messages, estimated_prompt_tokens, estimated_usage = self._prepare_provider_messages(system_prompt)
         # Do not emit a pre-stream estimate — it causes the display to jump
         # to an estimated value only to be overwritten by real data moments later.
 
@@ -904,18 +850,12 @@ class AgentLoop:
             if chunk.is_tool_call_start and chunk.tool_call_id:
                 current_tool_arg_parts[chunk.tool_call_id] = []
                 current_tool_names[chunk.tool_call_id] = chunk.tool_name or ""
-                yield TurnEvent.tool_call_start(
-                    chunk.tool_call_id, chunk.tool_name or ""
-                )
+                yield TurnEvent.tool_call_start(chunk.tool_call_id, chunk.tool_name or "")
 
             if chunk.tool_args_delta and chunk.tool_call_id:
                 if not chunk.is_tool_call_end:
-                    current_tool_arg_parts.setdefault(chunk.tool_call_id, []).append(
-                        chunk.tool_args_delta
-                    )
-                    yield TurnEvent.tool_call_args_delta(
-                        chunk.tool_call_id, chunk.tool_args_delta
-                    )
+                    current_tool_arg_parts.setdefault(chunk.tool_call_id, []).append(chunk.tool_args_delta)
+                    yield TurnEvent.tool_call_args_delta(chunk.tool_call_id, chunk.tool_args_delta)
 
             if chunk.is_tool_call_end and chunk.tool_call_id:
                 tc_id = chunk.tool_call_id
@@ -924,9 +864,7 @@ class AgentLoop:
                 try:
                     args = json.loads(raw_args) if raw_args else {}
                 except json.JSONDecodeError as je:
-                    log_error(
-                        f"Malformed tool arguments for {tc_name} (id={tc_id}): {je}. Raw: {raw_args[:200]}"
-                    )
+                    log_error(f"Malformed tool arguments for {tc_name} (id={tc_id}): {je}. Raw: {raw_args[:200]}")
                     args = {}
                     yield TurnEvent.error_event(
                         f"Warning: malformed arguments for tool '{tc_name}'. "
@@ -952,15 +890,11 @@ class AgentLoop:
             yield TurnEvent.usage_update(last_usage)
 
         assistant_text = "".join(assistant_text_parts)
-        log_debug(
-            f"Stream done: {chunk_count} chunks, {len(assistant_text)} chars, {len(tool_calls)} tool calls"
-        )
+        log_debug(f"Stream done: {chunk_count} chunks, {len(assistant_text)} chars, {len(tool_calls)} tool calls")
         return (assistant_text, tool_calls, last_usage, raw_parts)
 
     @staticmethod
-    def _estimate_prompt_tokens(
-        provider_messages: list[Message], system_prompt: str
-    ) -> int:
+    def _estimate_prompt_tokens(provider_messages: list[Message], system_prompt: str) -> int:
         """Estimate prompt token usage from message content lengths.
 
         Uses a lightweight character sum instead of JSON serialization.
@@ -988,9 +922,7 @@ class AgentLoop:
         if name in ("rename_variable", "rename_single_variable"):
             return f"Rename variable {args.get('variable_name', '?')} → {args.get('new_name', '?')}"
         if name in ("set_comment", "set_function_comment"):
-            return (
-                f"Set comment at {args.get('address', args.get('function_name', '?'))}"
-            )
+            return f"Set comment at {args.get('address', args.get('function_name', '?'))}"
         if name in ("set_type", "set_function_prototype"):
             return f"Set type at {args.get('ea', args.get('name_or_address', '?'))}"
         if name in ("nop_microcode", "nop_instructions"):
@@ -1005,11 +937,7 @@ class AgentLoop:
             if k in args:
                 summary_parts.append(f"{k}={args[k]}")
                 break
-        return (
-            f"Call {name}({', '.join(summary_parts)})"
-            if summary_parts
-            else f"Call {name}"
-        )
+        return f"Call {name}({', '.join(summary_parts)})" if summary_parts else f"Call {name}"
 
     def _wait_for_approval(
         self,
@@ -1075,11 +1003,7 @@ class AgentLoop:
             original_hex = tc.arguments.get("original_hex", "")
             new_hex = tc.arguments.get("new_hex", "")
             try:
-                original_bytes = (
-                    bytes.fromhex(original_hex.replace(" ", ""))
-                    if original_hex
-                    else b""
-                )
+                original_bytes = bytes.fromhex(original_hex.replace(" ", "")) if original_hex else b""
             except ValueError:
                 original_bytes = b""
             try:
@@ -1098,9 +1022,7 @@ class AgentLoop:
             yield TurnEvent.patch_applied(address, summary, original_hex, new_hex)
 
         content = f"Finding logged: [{category}] {summary}"
-        tr = ToolResult(
-            tool_call_id=tc.id, name=tc.name, content=content, is_error=False
-        )
+        tr = ToolResult(tool_call_id=tc.id, name=tc.name, content=content, is_error=False)
         yield TurnEvent.tool_result_event(tc.id, tc.name, content, False)
         yield TurnEvent.exploration_finding(category, summary, address, relevance)
         return tr
@@ -1117,34 +1039,26 @@ class AgentLoop:
             to_phase = ExplorationPhase(to_phase_str)
         except ValueError:
             content = f"Invalid phase: '{to_phase_str}'. Valid: {[p.value for p in ExplorationPhase]}"
-            tr = ToolResult(
-                tool_call_id=tc.id, name=tc.name, content=content, is_error=True
-            )
+            tr = ToolResult(tool_call_id=tc.id, name=tc.name, content=content, is_error=True)
             yield TurnEvent.tool_result_event(tc.id, tc.name, content, True)
             return tr
 
         allowed, deny_reason = state.can_transition_to(to_phase)
         if not allowed:
             content = f"Cannot transition to {to_phase_str}: {deny_reason}"
-            tr = ToolResult(
-                tool_call_id=tc.id, name=tc.name, content=content, is_error=True
-            )
+            tr = ToolResult(tool_call_id=tc.id, name=tc.name, content=content, is_error=True)
             yield TurnEvent.tool_result_event(tc.id, tc.name, content, True)
             return tr
 
         old_phase = state.phase.value
         state.transition_to(to_phase)
         content = f"Phase transition: {old_phase} → {to_phase_str}. {reason}"
-        tr = ToolResult(
-            tool_call_id=tc.id, name=tc.name, content=content, is_error=False
-        )
+        tr = ToolResult(tool_call_id=tc.id, name=tc.name, content=content, is_error=False)
         yield TurnEvent.tool_result_event(tc.id, tc.name, content, False)
         yield TurnEvent.exploration_phase_change(old_phase, to_phase_str, reason)
         return tr
 
-    def _handle_save_memory_tool(
-        self, tc: ToolCall
-    ) -> Generator[TurnEvent, None, ToolResult]:
+    def _handle_save_memory_tool(self, tc: ToolCall) -> Generator[TurnEvent, None, ToolResult]:
         """Handle the save_memory pseudo-tool."""
         from ..core.sanitize import strip_injection_markers
 
@@ -1154,9 +1068,7 @@ class AgentLoop:
             content = "Error: 'fact' is required."
             is_err = True
         else:
-            idb_dir = (
-                os.path.dirname(self.session.idb_path) if self.session.idb_path else ""
-            )
+            idb_dir = os.path.dirname(self.session.idb_path) if self.session.idb_path else ""
             if not idb_dir:
                 content = "Error: No IDB/BNDB path set; cannot determine where to save memory."
                 is_err = True
@@ -1170,15 +1082,11 @@ class AgentLoop:
                 except OSError as e:
                     content = f"Error writing RIKUGAN.md: {e}"
                     is_err = True
-        tr = ToolResult(
-            tool_call_id=tc.id, name=tc.name, content=content, is_error=is_err
-        )
+        tr = ToolResult(tool_call_id=tc.id, name=tc.name, content=content, is_error=is_err)
         yield TurnEvent.tool_result_event(tc.id, tc.name, content, is_err)
         return tr
 
-    def _handle_spawn_subagent_tool(
-        self, tc: ToolCall
-    ) -> Generator[TurnEvent, None, ToolResult]:
+    def _handle_spawn_subagent_tool(self, tc: ToolCall) -> Generator[TurnEvent, None, ToolResult]:
         """Handle the spawn_subagent pseudo-tool."""
         task = tc.arguments.get("task", "")
         max_turns = tc.arguments.get("max_turns", 20)
@@ -1196,28 +1104,20 @@ class AgentLoop:
                     parent_loop=self,
                 )
                 raw = yield from runner.run_task(task, max_turns=max_turns)
-                content = sanitize_tool_result(
-                    raw or "(Subagent produced no output)", "spawn_subagent"
-                )
+                content = sanitize_tool_result(raw or "(Subagent produced no output)", "spawn_subagent")
                 is_err = False
                 # Store subagent messages separately for export
                 if runner.last_session and runner.last_session.messages:
-                    self.session.subagent_logs[tc.id] = list(
-                        runner.last_session.messages
-                    )
+                    self.session.subagent_logs[tc.id] = list(runner.last_session.messages)
             except Exception as e:
                 content = f"Subagent error: {e}"
                 is_err = True
                 log_error(f"spawn_subagent failed: {e}")
-        tr = ToolResult(
-            tool_call_id=tc.id, name=tc.name, content=content, is_error=is_err
-        )
+        tr = ToolResult(tool_call_id=tc.id, name=tc.name, content=content, is_error=is_err)
         yield TurnEvent.tool_result_event(tc.id, tc.name, content, is_err)
         return tr
 
-    def _handle_activate_skill_tool(
-        self, tc: ToolCall
-    ) -> Generator[TurnEvent, None, ToolResult]:
+    def _handle_activate_skill_tool(self, tc: ToolCall) -> Generator[TurnEvent, None, ToolResult]:
         """Handle the activate_skill pseudo-tool."""
         slug = tc.arguments.get("slug", "")
         skill = self.skills.get(slug) if self.skills else None
@@ -1228,30 +1128,22 @@ class AgentLoop:
             content = f"[Skill: {skill.name}]\n\n{sanitize_skill_body(skill.body, skill.name)}"
             is_err = False
             log_debug(f"Agent activated skill: /{slug}")
-        tr = ToolResult(
-            tool_call_id=tc.id, name=tc.name, content=content, is_error=is_err
-        )
+        tr = ToolResult(tool_call_id=tc.id, name=tc.name, content=content, is_error=is_err)
         yield TurnEvent.tool_result_event(tc.id, tc.name, content, is_err)
         return tr
 
-    def _handle_ask_user_tool(
-        self, tc: ToolCall
-    ) -> Generator[TurnEvent, None, ToolResult]:
+    def _handle_ask_user_tool(self, tc: ToolCall) -> Generator[TurnEvent, None, ToolResult]:
         """Handle the ask_user pseudo-tool."""
         question = tc.arguments.get("question", "")
         options = tc.arguments.get("options", [])
         yield TurnEvent.user_question(question, options, tc.id)
         answer = self._wait_for_queue(self._user_answer_queue)
         content = f"User answered: {answer}"
-        tr = ToolResult(
-            tool_call_id=tc.id, name=tc.name, content=content, is_error=False
-        )
+        tr = ToolResult(tool_call_id=tc.id, name=tc.name, content=content, is_error=False)
         yield TurnEvent.tool_result_event(tc.id, tc.name, content, False)
         return tr
 
-    def _execute_single_tool(
-        self, tc: ToolCall
-    ) -> Generator[TurnEvent, None, ToolResult]:
+    def _execute_single_tool(self, tc: ToolCall) -> Generator[TurnEvent, None, ToolResult]:
         """Handle approval gating, mutation tracking, and execution of a real tool."""
         # Profile: block denied tools at execution time (defense-in-depth —
         # the schema filter already hides them, but the LLM may still try)
@@ -1259,9 +1151,7 @@ class AgentLoop:
         if profile.denied_tools and tc.name in profile.denied_tools:
             content = f"Error: Tool '{tc.name}' is denied by the active profile."
             log_debug(f"Blocked denied tool: {tc.name} (profile: {profile.name})")
-            tr = ToolResult(
-                tool_call_id=tc.id, name=tc.name, content=content, is_error=True
-            )
+            tr = ToolResult(tool_call_id=tc.id, name=tc.name, content=content, is_error=True)
             yield TurnEvent.tool_result_event(tc.id, tc.name, content, True)
             return tr
 
@@ -1270,9 +1160,7 @@ class AgentLoop:
             approved = yield from self._wait_for_approval(tc)
             if not approved:
                 content = "Tool execution denied by user."
-                tr = ToolResult(
-                    tool_call_id=tc.id, name=tc.name, content=content, is_error=True
-                )
+                tr = ToolResult(tool_call_id=tc.id, name=tc.name, content=content, is_error=True)
                 yield TurnEvent.tool_result_event(tc.id, tc.name, content, True)
                 return tr
 
@@ -1283,9 +1171,7 @@ class AgentLoop:
             approved = yield from self._wait_for_approval(tc)
             if not approved:
                 content = "Mutation denied by user."
-                tr = ToolResult(
-                    tool_call_id=tc.id, name=tc.name, content=content, is_error=True
-                )
+                tr = ToolResult(tool_call_id=tc.id, name=tc.name, content=content, is_error=True)
                 yield TurnEvent.tool_result_event(tc.id, tc.name, content, True)
                 return tr
 
@@ -1330,22 +1216,14 @@ class AgentLoop:
         # Sanitize tool output before it enters the conversation.
         # Error messages may contain attacker-controlled content (e.g. function
         # names), so strip injection markers even though we skip full wrapping.
-        sanitized = (
-            sanitize_tool_result(result, tc.name)
-            if not is_error
-            else strip_injection_markers(result)
-        )
+        sanitized = sanitize_tool_result(result, tc.name) if not is_error else strip_injection_markers(result)
 
         # Profile: strip IOCs from tool results when any IOC filter is enabled
         profile = self.config.get_active_profile()
         if profile.has_any_ioc_filter:
-            sanitized = strip_iocs(
-                sanitized, profile.ioc_filters, profile.custom_filter_rules
-            )
+            sanitized = strip_iocs(sanitized, profile.ioc_filters, profile.custom_filter_rules)
 
-        tr = ToolResult(
-            tool_call_id=tc.id, name=tc.name, content=sanitized, is_error=is_error
-        )
+        tr = ToolResult(tool_call_id=tc.id, name=tc.name, content=sanitized, is_error=is_error)
         # Use sanitized content for the UI event too — the raw `result`
         # could contain injection strings (e.g. ANTHROPIC_MAGIC_STRING from
         # a malicious binary) that must never reach the display layer.
@@ -1378,28 +1256,20 @@ class AgentLoop:
             tool_results.append(tr)
         return tool_results
 
-    def _build_tools_schema(
-        self, active_skill: Any, use_exploration_mode: bool
-    ) -> list:
+    def _build_tools_schema(self, active_skill: Any, use_exploration_mode: bool) -> list:
         """Build the full tool schema list for a run, including pseudo-tools."""
         tools_schema = list(self.tools.to_provider_format())
 
         # Filter to skill-allowed tools if the skill restricts them
         if active_skill and active_skill.allowed_tools:
             allowed = set(active_skill.allowed_tools)
-            tools_schema = [
-                t for t in tools_schema if t.get("function", {}).get("name") in allowed
-            ]
+            tools_schema = [t for t in tools_schema if t.get("function", {}).get("name") in allowed]
 
         # Profile: remove denied tools
         profile = self.config.get_active_profile()
         if profile.denied_tools:
             denied = set(profile.denied_tools)
-            tools_schema = [
-                t
-                for t in tools_schema
-                if t.get("function", {}).get("name") not in denied
-            ]
+            tools_schema = [t for t in tools_schema if t.get("function", {}).get("name") not in denied]
 
         # activate_skill: dynamic because the slug enum depends on loaded skills
         if self.skills and self.skills.list_slugs():
@@ -1490,9 +1360,7 @@ class AgentLoop:
             self.session.add_message(Message(role=Role.USER, content=user_message))
             system_prompt = minify_text(self._build_system_prompt())
             tools_schema = self._build_tools_schema(active_skill, use_exploration_mode)
-            log_debug(
-                f"Agent run started: {len(tools_schema)} tools, msg={user_message[:80]!r}"
-            )
+            log_debug(f"Agent run started: {len(tools_schema)} tools, msg={user_message[:80]!r}")
 
             if use_exploration_mode:
                 yield from run_exploration_mode(
@@ -1583,9 +1451,7 @@ class BackgroundAgentRunner:
                         timeout=1,
                     )
                 except queue.Full:
-                    log_debug(
-                        "Event queue full, dropping pending text before error event"
-                    )
+                    log_debug("Event queue full, dropping pending text before error event")
                 pending_text.clear()
             self.event_queue.put(TurnEvent.error_event(str(e)))
         finally:
@@ -1596,9 +1462,7 @@ class BackgroundAgentRunner:
                         timeout=1,
                     )
                 except queue.Full:
-                    log_debug(
-                        "Event queue full, dropping pending text in finally block"
-                    )
+                    log_debug("Event queue full, dropping pending text in finally block")
             self.event_queue.put(None)  # Sentinel
 
     def cancel(self) -> None:

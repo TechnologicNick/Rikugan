@@ -9,9 +9,7 @@ from typing import Annotated
 from ...tools.base import parse_addr, tool
 
 
-def format_callers_callees(
-    fname: str, start: int, callers: Iterable[str], callees: Iterable[str]
-) -> str:
+def format_callers_callees(fname: str, start: int, callers: Iterable[str], callees: Iterable[str]) -> str:
     """Format a function callers/callees summary (shared between IDA and BN xref tools)."""
     callers = sorted(callers)
     callees = sorted(callees)
@@ -25,18 +23,14 @@ def format_callers_callees(
     return "\n".join(parts)
 
 
-ida_funcs = ida_name = ida_xref = idautils = (
-    None  # populated below when IDA is available
-)
+ida_funcs = ida_name = ida_xref = idautils = None  # populated below when IDA is available
 try:
     ida_funcs = importlib.import_module("ida_funcs")
     ida_name = importlib.import_module("ida_name")
     ida_xref = importlib.import_module("ida_xref")
     idautils = importlib.import_module("idautils")
 except ImportError:
-    ida_funcs = ida_name = ida_xref = idautils = (
-        None  # IDA not present — tools unavailable in non-IDA context
-    )
+    ida_funcs = ida_name = ida_xref = idautils = None  # IDA not present — tools unavailable in non-IDA context
 
 
 # Xref type constants → human-readable names.
@@ -71,11 +65,7 @@ def xrefs_to(
 
     ea = parse_addr(address)
     target_name = ida_name.get_name(ea)
-    lines = [
-        f"Cross-references to 0x{ea:x}"
-        + (f" ({target_name})" if target_name else "")
-        + ":"
-    ]
+    lines = [f"Cross-references to 0x{ea:x}" + (f" ({target_name})" if target_name else "") + ":"]
 
     count = 0
     for xref in idautils.XrefsTo(ea, 0):

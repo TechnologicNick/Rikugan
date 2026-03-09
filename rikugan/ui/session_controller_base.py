@@ -49,9 +49,7 @@ class SessionControllerBase:
         self.config = config
         self.host_name = host_name
         self._provider_registry = ProviderRegistry()
-        self._provider_registry.register_custom_providers(
-            list(config.custom_providers.keys())
-        )
+        self._provider_registry.register_custom_providers(list(config.custom_providers.keys()))
         self._tool_registry = tool_registry_factory()
         self._skill_registry = SkillRegistry()
         self._mcp_manager = MCPManager()
@@ -100,9 +98,7 @@ class SessionControllerBase:
             enabled_set = set(self.config.enabled_external_mcp)
             if enabled_set:
                 for source_key, servers in external_mcp.items():
-                    enabled = [
-                        s for s in servers if f"{source_key}:{s.name}" in enabled_set
-                    ]
+                    enabled = [s for s in servers if f"{source_key}:{s.name}" in enabled_set]
                     if enabled:
                         self._mcp_manager.add_external_configs(enabled)
 
@@ -377,13 +373,9 @@ class SessionControllerBase:
                 db_instance_id=self._db_instance_id,
             )
             if session and session.messages:
-                log_debug(
-                    f"Restoring session {session.id} with {len(session.messages)} messages"
-                )
+                log_debug(f"Restoring session {session.id} with {len(session.messages)} messages")
                 self._sessions[self._active_tab_id] = session
-                log_info(
-                    f"Restored session {session.id} ({len(session.messages)} messages)"
-                )
+                log_info(f"Restored session {session.id} ({len(session.messages)} messages)")
                 return session
         except (OSError, ValueError, KeyError) as e:
             log_error(f"Failed to restore session: {e}")
@@ -407,9 +399,7 @@ class SessionControllerBase:
 
     def update_settings(self) -> None:
         # Re-register custom providers in case user added/removed one
-        self._provider_registry.register_custom_providers(
-            list(self.config.custom_providers.keys())
-        )
+        self._provider_registry.register_custom_providers(list(self.config.custom_providers.keys()))
         for session in self._sessions.values():
             session.provider_name = self.config.provider.name
             session.model_name = self.config.provider.model

@@ -50,6 +50,4 @@ _BINJA_CAPABILITIES = (
     "- Execute Python scripts as a last resort when no built-in tool fits\n"
 )
 
-BINJA_BASE_PROMPT = assemble_system_prompt(
-    _BINJA_INTRO, _BINJA_TOOL_USAGE, _BINJA_CAPABILITIES
-)
+BINJA_BASE_PROMPT = assemble_system_prompt(_BINJA_INTRO, _BINJA_TOOL_USAGE, _BINJA_CAPABILITIES)

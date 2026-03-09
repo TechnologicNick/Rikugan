@@ -79,18 +79,14 @@ def build_system_prompt(
         log_debug("Profile: hiding binary metadata from system prompt")
     else:
         if binary_info:
-            parts.append(
-                f"\n## Current Binary\n{sanitize_binary_context(binary_info, 'binary_info')}"
-            )
+            parts.append(f"\n## Current Binary\n{sanitize_binary_context(binary_info, 'binary_info')}")
 
         if current_address:
             parts.append(
                 f"\n## Current Position\nAddress: {sanitize_binary_context(current_address, 'cursor_address')}"
             )
             if current_function:
-                parts.append(
-                    f"Function: {sanitize_binary_context(current_function, 'cursor_function')}"
-                )
+                parts.append(f"Function: {sanitize_binary_context(current_function, 'cursor_function')}")
 
     if tool_names:
         parts.append(f"\n## Available Tools\n{', '.join(tool_names)}")
@@ -112,9 +108,7 @@ def build_system_prompt(
                 "samples, or external threat intelligence."
             )
         if profile.custom_filters:
-            parts.append(
-                "\n## Profile Instructions\n" + "\n".join(profile.custom_filters)
-            )
+            parts.append("\n## Profile Instructions\n" + "\n".join(profile.custom_filters))
         if profile.denied_functions:
             parts.append(
                 "\n## Restricted Functions\n"
@@ -134,9 +128,7 @@ def build_system_prompt(
             )
             if profile.has_any_ioc_filter:
                 active = [
-                    IOC_FILTER_CATEGORIES[k]
-                    for k, v in profile.ioc_filters.items()
-                    if v and k in IOC_FILTER_CATEGORIES
+                    IOC_FILTER_CATEGORIES[k] for k, v in profile.ioc_filters.items() if v and k in IOC_FILTER_CATEGORIES
                 ]
                 if active:
                     section += (

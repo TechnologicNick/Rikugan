@@ -107,9 +107,7 @@ def _resolve_ctree_ea(cfunc, target_ea: int):
             if items:
                 return items[0].ea, itp
     except Exception as exc:
-        log_debug(
-            f"eamap lookup failed for {target_ea:#x}, falling back to ctree walk: {exc}"
-        )
+        log_debug(f"eamap lookup failed for {target_ea:#x}, falling back to ctree walk: {exc}")
 
     # --- Strategy 2: nearest statement by ctree walk ---
     stmt_eas = []
@@ -146,9 +144,7 @@ def _resolve_ctree_ea(cfunc, target_ea: int):
 @tool(category="decompiler", requires_decompiler=True, mutating=True)
 def set_pseudocode_comment(
     func_address: Annotated[str, "Function address (hex string)"],
-    target_address: Annotated[
-        str, "Address of the pseudocode line to comment (hex string)"
-    ],
+    target_address: Annotated[str, "Address of the pseudocode line to comment (hex string)"],
     comment: Annotated[str, "Comment text to insert above the line"],
 ) -> str:
     """Insert a comment into the Hex-Rays pseudocode view at a specific line.
@@ -168,10 +164,7 @@ def set_pseudocode_comment(
 
     func = ida_funcs.get_func(func_ea)
     if func and not (func.start_ea <= target_ea < func.end_ea):
-        return (
-            f"Address 0x{target_ea:x} is outside function "
-            f"0x{func.start_ea:x}\u20130x{func.end_ea:x}"
-        )
+        return f"Address 0x{target_ea:x} is outside function 0x{func.start_ea:x}\u20130x{func.end_ea:x}"
 
     # Resolve to a valid ctree location; fall back to raw ea + ITP_SEMI
     resolved = _resolve_ctree_ea(cfunc, target_ea)
@@ -184,9 +177,7 @@ def set_pseudocode_comment(
     cfunc.set_user_cmt(tl, comment)
     cfunc.save_user_cmts()
 
-    return (
-        f"Set pseudocode comment at 0x{item_ea:x} in function 0x{func_ea:x}:\n{comment}"
-    )
+    return f"Set pseudocode comment at 0x{item_ea:x} in function 0x{func_ea:x}:\n{comment}"
 
 
 @tool(category="decompiler", requires_decompiler=True)

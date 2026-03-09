@@ -257,11 +257,7 @@ class TurnEvent:
         return TurnEvent(
             type=TurnEventType.SAVE_DISCARDED,
             text=f"Discarded {patch_count} patches"
-            + (
-                " (original bytes restored)"
-                if rolled_back
-                else " (in-memory changes persist)"
-            ),
+            + (" (original bytes restored)" if rolled_back else " (in-memory changes persist)"),
             metadata={"patch_count": patch_count, "rolled_back": rolled_back},
         )
 

@@ -30,7 +30,7 @@ def _unwrap_exception(exc: BaseException) -> str:
     hiding the actual cause behind "unhandled errors in a TaskGroup (N sub-exception)".
     """
     # Python 3.11+ ExceptionGroup
-    if isinstance(exc, BaseExceptionGroup):  # type: ignore[name-defined]  # noqa: F821
+    if isinstance(exc, BaseExceptionGroup):  # type: ignore[name-defined]
         parts = []
         for sub in exc.exceptions:
             parts.append(_unwrap_exception(sub))
@@ -84,10 +84,7 @@ class MCPClient:
 
     def __init__(self, config: MCPServerConfig):
         if not _HAS_MCP:
-            raise MCPError(
-                "The 'mcp' package is required for MCP support. "
-                "Install it with: pip install mcp"
-            )
+            raise MCPError("The 'mcp' package is required for MCP support. Install it with: pip install mcp")
 
         self.config = config
         self.name = config.name
@@ -106,12 +103,7 @@ class MCPClient:
 
     @property
     def is_running(self) -> bool:
-        return (
-            self._started
-            and self._running
-            and self._thread is not None
-            and self._thread.is_alive()
-        )
+        return self._started and self._running and self._thread is not None and self._thread.is_alive()
 
     @property
     def is_healthy(self) -> bool:
@@ -122,9 +114,7 @@ class MCPClient:
 
         Blocks until the server is ready or the timeout expires.
         """
-        log_info(
-            f"MCP[{self.name}]: starting server: {self.config.command} {self.config.args}"
-        )
+        log_info(f"MCP[{self.name}]: starting server: {self.config.command} {self.config.args}")
 
         self._running = True
         self._ready.clear()
@@ -140,15 +130,11 @@ class MCPClient:
         # Wait for the async loop to finish initialization
         if not self._ready.wait(timeout=timeout):
             self._running = False
-            raise MCPConnectionError(
-                f"MCP[{self.name}]: initialize timed out after {timeout}s"
-            )
+            raise MCPConnectionError(f"MCP[{self.name}]: initialize timed out after {timeout}s")
 
         if self._start_error:
             self._running = False
-            raise MCPConnectionError(
-                f"MCP[{self.name}]: handshake failed: {self._start_error}"
-            )
+            raise MCPConnectionError(f"MCP[{self.name}]: handshake failed: {self._start_error}")
 
         self._started = True
         log_info(f"MCP[{self.name}]: started OK, {len(self._tools)} tools registered")
@@ -173,16 +159,12 @@ class MCPClient:
     def get_tools(self) -> list[MCPToolSchema]:
         return list(self._tools)
 
-    def call_tool(
-        self, name: str, arguments: dict[str, Any], timeout: float = MCP_DEFAULT_TIMEOUT
-    ) -> str:
+    def call_tool(self, name: str, arguments: dict[str, Any], timeout: float = MCP_DEFAULT_TIMEOUT) -> str:
         """Call an MCP tool and return the result as a string."""
         log_debug(f"MCP[{self.name}]: calling tool {name}")
 
         try:
-            result = self._run_coro(
-                self._async_call_tool(name, arguments), timeout=timeout
-            )
+            result = self._run_coro(self._async_call_tool(name, arguments), timeout=timeout)
         except MCPTimeoutError:
             raise
         except MCPError:
@@ -206,9 +188,7 @@ class MCPClient:
             return future.result(timeout=timeout)
         except TimeoutError:
             future.cancel()
-            raise MCPTimeoutError(
-                f"MCP[{self.name}]: operation timed out after {timeout}s"
-            ) from None
+            raise MCPTimeoutError(f"MCP[{self.name}]: operation timed out after {timeout}s") from None
 
     async def _async_call_tool(self, name: str, arguments: dict[str, Any]) -> str:
         """Call an MCP tool via the ClientSession."""
@@ -275,9 +255,7 @@ class MCPClient:
                         session.initialize(),
                         timeout=handshake_timeout,
                     )
-                    server_info = getattr(init_result, "server_info", None) or getattr(
-                        init_result, "serverInfo", None
-                    )
+                    server_info = getattr(init_result, "server_info", None) or getattr(init_result, "serverInfo", None)
                     log_debug(f"MCP[{self.name}]: initialized, server: {server_info}")
 
                     # Discover tools (bounded by timeout)
@@ -291,9 +269,7 @@ class MCPClient:
                             MCPToolSchema(
                                 name=t.name,
                                 description=t.description or "",
-                                input_schema=t.inputSchema
-                                if hasattr(t, "inputSchema")
-                                else {},
+                                input_schema=t.inputSchema if hasattr(t, "inputSchema") else {},
                             )
                         )
                     log_info(f"MCP[{self.name}]: discovered {len(self._tools)} tools")

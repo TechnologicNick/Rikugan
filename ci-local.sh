@@ -44,20 +44,23 @@ else
     fi
 fi
 
-# ── 2. Ruff — lint ────────────────────────────────────────────────────────────
+# ── 2. Ruff — lint (config in pyproject.toml) ────────────────────────────────
 info "[2/5] Ruff lint..."
-RUFF_ARGS=()
 if $FIX; then
-    RUFF_ARGS+=(--fix)
-fi
-
-if python3 -m ruff check rikugan/ "${RUFF_ARGS[@]}" 2>&1; then
-    ok "ruff lint"
+    if python3 -m ruff check rikugan/ --fix 2>&1; then
+        ok "ruff lint (auto-fixed)"
+    else
+        fail "ruff lint" "see above"
+    fi
 else
-    fail "ruff lint" "see above"
+    if python3 -m ruff check rikugan/ 2>&1; then
+        ok "ruff lint"
+    else
+        fail "ruff lint" "see above"
+    fi
 fi
 
-# ── 3. Mypy — core modules only ───────────────────────────────────────────────
+# ── 3. Mypy — core modules only (config in pyproject.toml) ───────────────────
 info "[3/5] Mypy (core + providers)..."
 MYPY_OUT=$(python3 -m mypy rikugan/core rikugan/providers --pretty \
     2>&1) && MYPY_OK=true || MYPY_OK=false

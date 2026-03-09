@@ -111,9 +111,7 @@ def _gen_microcode_at(ea: int, maturity: int):
         if mba is not None:
             return mba
     except (AttributeError, RuntimeError) as e:
-        log_debug(
-            f"gen_microcode unavailable or failed for {pfn.start_ea:#x}: {e}; using hook capture"
-        )
+        log_debug(f"gen_microcode unavailable or failed for {pfn.start_ea:#x}: {e}; using hook capture")
 
     # --- Fallback: capture via Hexrays_Hooks during decompile() ---
     hook = _MBACapture(maturity)
@@ -121,9 +119,7 @@ def _gen_microcode_at(ea: int, maturity: int):
     try:
         ida_hexrays.decompile(pfn.start_ea)
     except (ida_hexrays.DecompilationFailure, RuntimeError) as e:
-        log_debug(
-            f"_capture_at_maturity decompile failed (expected for hook capture): {e}"
-        )
+        log_debug(f"_capture_at_maturity decompile failed (expected for hook capture): {e}")
     finally:
         hook.unhook()
 
@@ -255,8 +251,7 @@ def nop_microcode(
     func_address: Annotated[str, "Address of the function to patch"],
     instruction_addresses: Annotated[
         str,
-        "Comma-separated hex addresses of instructions to NOP "
-        "(e.g. '0x401004,0x401008,0x40100c')",
+        "Comma-separated hex addresses of instructions to NOP (e.g. '0x401004,0x401008,0x40100c')",
     ],
     optimizer_name: Annotated[str, "Name for this NOP rule (for later removal)"] = "",
 ) -> str:
@@ -316,9 +311,7 @@ def nop_microcode(
 @tool(category="microcode", requires_decompiler=True, mutating=True)
 def install_microcode_optimizer(
     name: Annotated[str, "Unique name for this optimizer (used to remove it later)"],
-    description: Annotated[
-        str, "What this optimizer does (for list_microcode_optimizers)"
-    ],
+    description: Annotated[str, "What this optimizer does (for list_microcode_optimizers)"],
     optimizer_type: Annotated[
         str,
         "Type: 'instruction' (called per-instruction) or 'block' (called per-block)",
@@ -435,11 +428,7 @@ def list_microcode_optimizers() -> str:
 
     lines = [f"Installed optimizers ({len(installed_optimizers)}):"]
     for opt_name, opt in installed_optimizers.items():
-        kind = (
-            "instruction"
-            if isinstance(opt, (NopOptimizer, DynamicInsnOptimizer))
-            else "block"
-        )
+        kind = "instruction" if isinstance(opt, (NopOptimizer, DynamicInsnOptimizer)) else "block"
         desc = getattr(opt, "description", "")
         if isinstance(opt, NopOptimizer):
             desc = f"NOP {len(opt.target_eas)} addresses (applied {opt.applied_count}x)"
@@ -481,8 +470,6 @@ def redecompile_function(
 
     pseudocode = get_pseudocode_text(cfunc)
     active = list(installed_optimizers.keys())
-    status = (
-        f"Active optimizers: {', '.join(active)}" if active else "No optimizers active"
-    )
+    status = f"Active optimizers: {', '.join(active)}" if active else "No optimizers active"
 
     return f"=== Redecompiled {func_name(pfn)} ===\n{status}\n\n{pseudocode}"

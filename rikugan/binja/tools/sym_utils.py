@@ -27,12 +27,7 @@ def get_symbol_at(bv: Any, ea: int) -> Any:
 def symbol_name(sym: Any) -> str:
     if sym is None:
         return ""
-    return str(
-        getattr(sym, "full_name", None)
-        or getattr(sym, "short_name", None)
-        or getattr(sym, "name", None)
-        or ""
-    )
+    return str(getattr(sym, "full_name", None) or getattr(sym, "short_name", None) or getattr(sym, "name", None) or "")
 
 
 def resolve_name_at(bv: Any, ea: int) -> str:

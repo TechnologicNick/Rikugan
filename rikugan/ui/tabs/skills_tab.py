@@ -23,9 +23,7 @@ if TYPE_CHECKING:
 class SkillsTab(QWidget):
     """Tab for managing skills: Rikugan built-in/user skills + external skills."""
 
-    def __init__(
-        self, config: RikuganConfig, service: SettingsService, parent: QWidget = None
-    ):
+    def __init__(self, config: RikuganConfig, service: SettingsService, parent: QWidget = None):
         super().__init__(parent)
         self._config = config
         self._service = service
@@ -66,18 +64,14 @@ class SkillsTab(QWidget):
             return group
 
         for skill in sorted(skills, key=lambda s: s.slug):
-            cb = QCheckBox(
-                f"{skill.slug}  —  {skill.description or '(no description)'}"
-            )
+            cb = QCheckBox(f"{skill.slug}  —  {skill.description or '(no description)'}")
             cb.setChecked(skill.slug not in disabled_set)
             self._rikugan_checks[skill.slug] = cb
             layout.addWidget(cb)
 
         return group
 
-    def _build_external_group(
-        self, source_key: str, skills: list[SkillDefinition]
-    ) -> QGroupBox:
+    def _build_external_group(self, source_key: str, skills: list[SkillDefinition]) -> QGroupBox:
         """Build a group box for external skills from one source."""
         if source_key == "claude":
             title = "Claude Code Skills (~/.claude/skills/)"
@@ -97,9 +91,7 @@ class SkillsTab(QWidget):
 
         for skill in sorted(skills, key=lambda s: s.slug):
             ext_id = f"{source_key}:{skill.slug}"
-            cb = QCheckBox(
-                f"{skill.slug}  —  {skill.description or '(no description)'}"
-            )
+            cb = QCheckBox(f"{skill.slug}  —  {skill.description or '(no description)'}")
             cb.setChecked(ext_id in enabled_set)
             self._external_checks[ext_id] = cb
             layout.addWidget(cb)
@@ -109,14 +101,10 @@ class SkillsTab(QWidget):
     def apply_to_config(self, config: RikuganConfig) -> None:
         """Write checkbox state back to config fields."""
         # Disabled Rikugan skills (unchecked = disabled)
-        config.disabled_skills = [
-            slug for slug, cb in self._rikugan_checks.items() if not cb.isChecked()
-        ]
+        config.disabled_skills = [slug for slug, cb in self._rikugan_checks.items() if not cb.isChecked()]
 
         # Enabled external skills (checked = enabled)
-        config.enabled_external_skills = [
-            ext_id for ext_id, cb in self._external_checks.items() if cb.isChecked()
-        ]
+        config.enabled_external_skills = [ext_id for ext_id, cb in self._external_checks.items() if cb.isChecked()]
 
         log_debug(
             f"Skills config: {len(config.disabled_skills)} disabled, "

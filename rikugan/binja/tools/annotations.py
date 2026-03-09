@@ -163,9 +163,7 @@ def set_function_comment(
         return f"Set function comment at 0x{int(getattr(func, 'start', ea)):x}"
     except Exception as e:
         log_debug(f"set_function_comment setattr failed: {e}")
-        return (
-            f"Failed to set function comment at 0x{int(getattr(func, 'start', ea)):x}"
-        )
+        return f"Failed to set function comment at 0x{int(getattr(func, 'start', ea)):x}"
 
 
 @tool(category="annotations", mutating=True)
@@ -177,11 +175,7 @@ def rename_address(
     bv = require_bv()
     ea = parse_addr_like(address)
     old = ""
-    sym = (
-        getattr(bv, "get_symbol_at", lambda _ea: None)(ea)
-        if hasattr(bv, "get_symbol_at")
-        else None
-    )
+    sym = getattr(bv, "get_symbol_at", lambda _ea: None)(ea) if hasattr(bv, "get_symbol_at") else None
     if sym is not None:
         old = getattr(sym, "full_name", None) or getattr(sym, "name", None) or ""
     ok = rename_symbol_at(bv, ea, new_name)

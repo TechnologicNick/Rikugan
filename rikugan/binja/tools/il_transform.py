@@ -83,9 +83,7 @@ def il_replace_expr(
         str,
         "Replacement type: 'const' (constant value), 'nop', or 'copy_from' (copy from another index)",
     ],
-    value: Annotated[
-        int, "Value for 'const' type, or source index for 'copy_from'"
-    ] = 0,
+    value: Annotated[int, "Value for 'const' type, or source index for 'copy_from'"] = 0,
     size: Annotated[int, "Size in bytes for the replacement expression"] = 0,
     level: Annotated[str, "IL level: 'llil' or 'mlil'"] = "mlil",
 ) -> str:
@@ -291,12 +289,8 @@ def il_remove_block(
 
 @tool(category="il", requires_decompiler=True, mutating=True)
 def patch_branch(
-    address: Annotated[
-        str, "Address of the conditional branch instruction (hex string)"
-    ],
-    action: Annotated[
-        str, "Action: 'force_true', 'force_false', 'invert', or 'unconditional'"
-    ],
+    address: Annotated[str, "Address of the conditional branch instruction (hex string)"],
+    action: Annotated[str, "Action: 'force_true', 'force_false', 'invert', or 'unconditional'"],
 ) -> str:
     """Force conditional branch at byte level (force_true/false/invert/unconditional)."""
     bv = require_bv()

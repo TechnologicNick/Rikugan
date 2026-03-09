@@ -37,9 +37,7 @@ class MCPManager:
         """Load MCP config. Returns number of enabled servers found."""
         self._configs = load_mcp_config(path)
         enabled = [c for c in self._configs if c.enabled]
-        log_info(
-            f"MCP config: {len(enabled)} enabled servers out of {len(self._configs)} total"
-        )
+        log_info(f"MCP config: {len(enabled)} enabled servers out of {len(self._configs)} total")
         return len(enabled)
 
     def add_external_configs(self, configs: list[MCPServerConfig]) -> None:
@@ -103,15 +101,11 @@ class MCPManager:
             client.start(timeout=hard)
             elapsed = time.monotonic() - t0
             if elapsed > _SOFT_TIMEOUT:
-                log_warning(
-                    f"MCP[{config.name}]: startup took {elapsed:.1f}s "
-                    f"(soft limit {_SOFT_TIMEOUT}s)"
-                )
+                log_warning(f"MCP[{config.name}]: startup took {elapsed:.1f}s (soft limit {_SOFT_TIMEOUT}s)")
             with self._lock:
                 if self._generation != generation or self._shut_down:
                     log_warning(
-                        f"MCP[{config.name}]: discarding stale startup "
-                        f"(gen {generation} vs current {self._generation})"
+                        f"MCP[{config.name}]: discarding stale startup (gen {generation} vs current {self._generation})"
                     )
                     client.stop()
                     return
@@ -125,9 +119,7 @@ class MCPManager:
             try:
                 client.stop()
             except Exception as stop_err:
-                log_debug(
-                    f"MCP[{config.name}]: cleanup after start failure: {stop_err}"
-                )
+                log_debug(f"MCP[{config.name}]: cleanup after start failure: {stop_err}")
 
     def stop_all(self) -> None:
         """Stop all running MCP servers."""

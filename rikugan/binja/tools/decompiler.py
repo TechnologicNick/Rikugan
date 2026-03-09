@@ -51,9 +51,7 @@ def decompile_function(address: Annotated[str, "Function address (hex string)"])
 
     hlil = _get_hlil(func)
     if hlil is None:
-        return (
-            f"HLIL not available for function at 0x{int(getattr(func, 'start', ea)):x}"
-        )
+        return f"HLIL not available for function at 0x{int(getattr(func, 'start', ea)):x}"
     text = _render_hlil(hlil, with_line_numbers=False)
     return text or "(no pseudocode)"
 
@@ -72,9 +70,7 @@ def get_pseudocode(
 
     hlil = _get_hlil(func)
     if hlil is None:
-        return (
-            f"HLIL not available for function at 0x{int(getattr(func, 'start', ea)):x}"
-        )
+        return f"HLIL not available for function at 0x{int(getattr(func, 'start', ea)):x}"
     text = _render_hlil(hlil, with_line_numbers=bool(with_line_numbers))
     return text or "(no pseudocode)"
 

@@ -174,9 +174,7 @@ def navigate_to(address: int) -> bool:
                     set_current_address(ea)
                 return ok
             except Exception as e:
-                sys.stderr.write(
-                    f"[Rikugan] navigate_to_address cb failed at 0x{ea:x}: {e}\n"
-                )
+                sys.stderr.write(f"[Rikugan] navigate_to_address cb failed at 0x{ea:x}: {e}\n")
         return False
 
     return False
@@ -186,11 +184,7 @@ def get_user_config_base_dir() -> str:
     """Return host-specific user base directory for Rikugan config/log files."""
     if is_ida():
         try:
-            return (
-                _idaapi.get_user_idadir()
-                if _idaapi
-                else os.path.join(str(Path.home()), ".idapro")
-            )
+            return _idaapi.get_user_idadir() if _idaapi else os.path.join(str(Path.home()), ".idapro")
         except Exception:
             return os.path.join(str(Path.home()), ".idapro")
 

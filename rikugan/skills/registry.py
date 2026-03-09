@@ -45,9 +45,7 @@ class SkillRegistry:
                 log_debug(f"User skill /{skill.slug} overrides built-in")
             self._skills[skill.slug] = skill
         if user_skills:
-            log_info(
-                f"Discovered {len(user_skills)} user skills ({overrides} overrides)"
-            )
+            log_info(f"Discovered {len(user_skills)} user skills ({overrides} overrides)")
 
         log_info(f"Total skills available: {len(self._skills)}")
         return len(self._skills)
@@ -107,9 +105,7 @@ class SkillRegistry:
         """Format a summary for inclusion in the system prompt."""
         if not self._skills:
             return None
-        lines = [
-            "Available skills (user invokes with /slug, or you can call activate_skill):"
-        ]
+        lines = ["Available skills (user invokes with /slug, or you can call activate_skill):"]
         for slug, skill in sorted(self._skills.items()):
             desc = skill.description or "(no description)"
             lines.append(f"  - /{slug}: {desc}")
@@ -137,9 +133,7 @@ class SkillRegistry:
             log_debug(f"Trigger match: /{best_skill.slug} ({best_count} hits)")
         return best_skill
 
-    def resolve_skill_invocation(
-        self, user_text: str
-    ) -> tuple[SkillDefinition | None, str]:
+    def resolve_skill_invocation(self, user_text: str) -> tuple[SkillDefinition | None, str]:
         """Check if user_text starts with /slug. Returns (skill, remaining) or (None, user_text)."""
         text = user_text.strip()
         if not text.startswith("/"):

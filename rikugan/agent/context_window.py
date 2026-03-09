@@ -70,9 +70,7 @@ class ContextWindowManager:
                 text = strip_injection_markers(msg.content[:150]) if msg.content else ""
                 tool_names = [tc.name for tc in msg.tool_calls]
                 if tool_names:
-                    summary_parts.append(
-                        f"Assistant used tools: {', '.join(tool_names)}"
-                    )
+                    summary_parts.append(f"Assistant used tools: {', '.join(tool_names)}")
                 if text:
                     summary_parts.append(f"Assistant said: {text}...")
             elif msg.role == Role.TOOL:
@@ -84,10 +82,7 @@ class ContextWindowManager:
         summary_msg = Message(role=Role.USER, content=summary_text)
 
         compacted = [*head, summary_msg, *tail]
-        log_info(
-            f"Context compacted: {len(messages)} → {len(compacted)} messages "
-            f"({len(middle)} messages summarized)"
-        )
+        log_info(f"Context compacted: {len(messages)} → {len(compacted)} messages ({len(middle)} messages summarized)")
         return compacted
 
     @staticmethod

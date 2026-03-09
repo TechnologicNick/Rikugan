@@ -50,10 +50,7 @@ class SessionHistory:
             "messages": [m.to_dict() for m in session.messages],
         }
         if session.subagent_logs:
-            data["subagent_logs"] = {
-                key: [m.to_dict() for m in msgs]
-                for key, msgs in session.subagent_logs.items()
-            }
+            data["subagent_logs"] = {key: [m.to_dict() for m in msgs] for key, msgs in session.subagent_logs.items()}
         if description:
             data["description"] = description
         with open(path, "w") as f:
@@ -87,9 +84,7 @@ class SessionHistory:
             session.subagent_logs[key] = [Message.from_dict(md) for md in msg_dicts]
         return session
 
-    def list_sessions(
-        self, idb_path: str = "", db_instance_id: str = ""
-    ) -> list[dict[str, Any]]:
+    def list_sessions(self, idb_path: str = "", db_instance_id: str = "") -> list[dict[str, Any]]:
         """List saved session summaries, filtered by IDB path and instance ID."""
         sessions = []
         normalized_target = _normalize_db_path(idb_path)
@@ -130,9 +125,7 @@ class SessionHistory:
                 continue
         return sessions
 
-    def get_latest_session(
-        self, idb_path: str = "", db_instance_id: str = ""
-    ) -> SessionState | None:
+    def get_latest_session(self, idb_path: str = "", db_instance_id: str = "") -> SessionState | None:
         """Load the most recently saved session for this IDB."""
         sessions = self.list_sessions(idb_path=idb_path, db_instance_id=db_instance_id)
         if not sessions:

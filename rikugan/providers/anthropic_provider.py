@@ -294,9 +294,7 @@ class AnthropicProvider(LLMProvider):
                 {
                     "name": func["name"],
                     "description": func.get("description", ""),
-                    "input_schema": func.get(
-                        "parameters", {"type": "object", "properties": {}}
-                    ),
+                    "input_schema": func.get("parameters", {"type": "object", "properties": {}}),
                 }
             )
         return anthropic_tools
@@ -316,9 +314,7 @@ class AnthropicProvider(LLMProvider):
                     ToolCall(
                         id=block.id,
                         name=block.name,
-                        arguments=block.input
-                        if isinstance(block.input, dict)
-                        else json.loads(block.input),
+                        arguments=block.input if isinstance(block.input, dict) else json.loads(block.input),
                     )
                 )
 
@@ -326,12 +322,8 @@ class AnthropicProvider(LLMProvider):
             prompt_tokens=response.usage.input_tokens,
             completion_tokens=response.usage.output_tokens,
             total_tokens=response.usage.input_tokens + response.usage.output_tokens,
-            cache_read_tokens=getattr(response.usage, "cache_read_input_tokens", 0)
-            or 0,
-            cache_creation_tokens=getattr(
-                response.usage, "cache_creation_input_tokens", 0
-            )
-            or 0,
+            cache_read_tokens=getattr(response.usage, "cache_read_input_tokens", 0) or 0,
+            cache_creation_tokens=getattr(response.usage, "cache_creation_input_tokens", 0) or 0,
         )
 
         return Message(
@@ -356,12 +348,8 @@ class AnthropicProvider(LLMProvider):
                 try:
                     retry_after = float(retry_hdr)
                 except (ValueError, TypeError) as parse_err:
-                    log_debug(
-                        f"Could not parse retry-after header {retry_hdr!r}: {parse_err}"
-                    )
-            raise RateLimitError(
-                provider="anthropic", retry_after=retry_after or 5.0
-            ) from e
+                    log_debug(f"Could not parse retry-after header {retry_hdr!r}: {parse_err}")
+            raise RateLimitError(provider="anthropic", retry_after=retry_after or 5.0) from e
         if isinstance(e, anthropic.BadRequestError):
             msg = str(e)
             if "context" in msg.lower() or "token" in msg.lower():
@@ -497,9 +485,7 @@ class AnthropicProvider(LLMProvider):
                         # Capture final output_tokens from message_delta usage
                         usage_delta = getattr(event, "usage", None)
                         if usage_delta is not None:
-                            output_tokens = (
-                                getattr(usage_delta, "output_tokens", 0) or 0
-                            )
+                            output_tokens = getattr(usage_delta, "output_tokens", 0) or 0
                             if output_tokens > 0:
                                 yield StreamChunk(
                                     usage=TokenUsage(
@@ -515,14 +501,8 @@ class AnthropicProvider(LLMProvider):
                                 usage=TokenUsage(
                                     prompt_tokens=msg.usage.input_tokens,
                                     completion_tokens=0,
-                                    cache_read_tokens=getattr(
-                                        msg.usage, "cache_read_input_tokens", 0
-                                    )
-                                    or 0,
-                                    cache_creation_tokens=getattr(
-                                        msg.usage, "cache_creation_input_tokens", 0
-                                    )
-                                    or 0,
+                                    cache_read_tokens=getattr(msg.usage, "cache_read_input_tokens", 0) or 0,
+                                    cache_creation_tokens=getattr(msg.usage, "cache_creation_input_tokens", 0) or 0,
                                 )
                             )
 

@@ -56,9 +56,7 @@ def get_logger() -> logging.Logger:
         file_handler.setLevel(logging.DEBUG)
         file_handler.setFormatter(fmt)
         _logger.addHandler(file_handler)
-        _logger.debug(
-            f"=== Rikugan debug log started — {time.strftime('%Y-%m-%d %H:%M:%S')} ==="
-        )
+        _logger.debug(f"=== Rikugan debug log started — {time.strftime('%Y-%m-%d %H:%M:%S')} ===")
         _logger.debug(f"Log file: {path}")
         _logger.debug(f"Python: {sys.version}")
         _logger.debug(f"Thread: {threading.current_thread().name}")
@@ -67,9 +65,7 @@ def get_logger() -> logging.Logger:
 
     # Structured JSON log (JSONL format for machine parsing / analytics)
     try:
-        json_path = os.path.join(
-            os.path.dirname(_log_file_path()), "rikugan_structured.jsonl"
-        )
+        json_path = os.path.join(os.path.dirname(_log_file_path()), "rikugan_structured.jsonl")
         json_handler = _FlushFileHandler(json_path, mode="a", encoding="utf-8")
         json_handler.setLevel(logging.INFO)
         json_handler.setFormatter(_JSONFormatter())

@@ -138,10 +138,7 @@ class SubagentRunner:
             parent_loop=self._parent_loop,
         )
 
-        log_info(
-            f"Subagent exploration started: goal={user_goal[:80]!r}, "
-            f"max_turns={max_turns}"
-        )
+        log_info(f"Subagent exploration started: goal={user_goal[:80]!r}, max_turns={max_turns}")
 
         # Run in explore-only mode via the /explore prefix
         yield from loop.run(f"/explore {user_goal}")

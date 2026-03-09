@@ -27,7 +27,7 @@ try:
     import tomllib  # Python 3.11+
 except ModuleNotFoundError:
     try:
-        import tomli as tomllib  # pip backport for 3.10 and earlier
+        import tomli as tomllib  # type: ignore[no-redef]  # pip backport for 3.10 and earlier
     except ModuleNotFoundError:
         tomllib = None  # type: ignore[assignment]
 
@@ -187,9 +187,7 @@ def _load_codex_mcp_toml(path: Path) -> list[MCPServerConfig]:
         if not command:
             continue
         # Codex uses startup_timeout_sec; map to our timeout field
-        timeout = float(
-            cfg.get("startup_timeout_sec", cfg.get("timeout", 30.0)) or 30.0
-        )
+        timeout = float(cfg.get("startup_timeout_sec", cfg.get("timeout", 30.0)) or 30.0)
         server = MCPServerConfig(
             name=name,
             command=command,

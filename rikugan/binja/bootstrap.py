@@ -76,9 +76,7 @@ def _navigate_cb(ea: int) -> bool:
                                     if rc is None or bool(rc):
                                         return True
                                 except Exception as e:
-                                    log_debug(
-                                        f"_navigate_cb UIContext.{meth_name} failed at 0x{ea:x}: {e}"
-                                    )
+                                    log_debug(f"_navigate_cb UIContext.{meth_name} failed at 0x{ea:x}: {e}")
         except Exception as e:
             log_debug(f"_navigate_cb UIContext navigation failed at 0x{ea:x}: {e}")
 
@@ -229,9 +227,7 @@ def _register_sidebar() -> None:
                 log_debug(f"RikuganSidebarWidget.closing panel.shutdown failed: {e}")
 
     # Resolve assets directory relative to the project root (two levels up from rikugan/binja/)
-    _assets_dir = os.path.join(
-        os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "assets"
-    )
+    _assets_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "assets")
 
     class RikuganSidebarWidgetType(SidebarWidgetType):  # type: ignore[misc, valid-type]
         def __init__(self):

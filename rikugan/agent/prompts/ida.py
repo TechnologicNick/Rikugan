@@ -40,9 +40,7 @@ built-in tools over execute_python (IDAPython scripting).
 
 _IDA_CAPABILITIES = (
     "## Capabilities\n"
-    "You have direct access to the IDA database through purpose-built tools:\n"
-    + SHARED_CAPABILITIES_BULLETS
-    + "\n"
+    "You have direct access to the IDA database through purpose-built tools:\n" + SHARED_CAPABILITIES_BULLETS + "\n"
     "- Read microcode at any maturity level (MMAT_GENERATED through MMAT_LVARS)\n"
     "- NOP junk microcode instructions to clean decompiler output\n"
     "- Install custom Python microcode optimizers (instruction-level or block-level)\n"

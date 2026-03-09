@@ -179,10 +179,7 @@ class SessionState:
                     found_ids = {tr.tool_call_id for tr in tool_msg.tool_results}
                     missing = needed_ids - found_ids
                     if missing:
-                        log_debug(
-                            f"Sanitize: patching {len(missing)} orphaned tool_use(s): "
-                            f"{', '.join(missing)}"
-                        )
+                        log_debug(f"Sanitize: patching {len(missing)} orphaned tool_use(s): {', '.join(missing)}")
                         patched_results = list(tool_msg.tool_results)
                         for tc in msg.tool_calls:
                             if tc.id in missing:
@@ -205,8 +202,7 @@ class SessionState:
                     i += 1
                 else:
                     log_debug(
-                        f"Sanitize: no tool_result message for "
-                        f"{len(msg.tool_calls)} tool_use(s), inserting stubs"
+                        f"Sanitize: no tool_result message for {len(msg.tool_calls)} tool_use(s), inserting stubs"
                     )
                     stubs = [
                         ToolResult(
@@ -233,14 +229,8 @@ class SessionState:
                 result.append(msg)
                 continue
             age = n - idx
-            max_chars = (
-                _OLD_RESULT_MAX_CHARS
-                if age > _OLD_RESULT_THRESHOLD
-                else _RECENT_RESULT_MAX_CHARS
-            )
-            new_results = [
-                _truncate_tool_result(tr, max_chars) for tr in msg.tool_results
-            ]
+            max_chars = _OLD_RESULT_MAX_CHARS if age > _OLD_RESULT_THRESHOLD else _RECENT_RESULT_MAX_CHARS
+            new_results = [_truncate_tool_result(tr, max_chars) for tr in msg.tool_results]
             result.append(Message(role=Role.TOOL, tool_results=new_results))
         return result
 

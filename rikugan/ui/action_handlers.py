@@ -32,10 +32,7 @@ def handle_send_to(ctx: dict[str, Any]) -> str:
 
 def handle_explain(ctx: dict[str, Any]) -> str:
     name, ea = _func_label(ctx)
-    return (
-        f"Explain the function {name} at 0x{ea:x}. "
-        "Decompile it and provide a detailed analysis."
-    )
+    return f"Explain the function {name} at 0x{ea:x}. Decompile it and provide a detailed analysis."
 
 
 def handle_rename(ctx: dict[str, Any]) -> str:

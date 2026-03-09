@@ -52,9 +52,7 @@ _GROUP_STYLE = (
 class ProfilesTab(QWidget):
     """Tab for managing analysis profiles."""
 
-    def __init__(
-        self, config: RikuganConfig, service: SettingsService, parent: QWidget = None
-    ):
+    def __init__(self, config: RikuganConfig, service: SettingsService, parent: QWidget = None):
         super().__init__(parent)
         self._config = config
         self._service = service
@@ -210,9 +208,7 @@ class ProfilesTab(QWidget):
         self._rule_type_combo.setFixedWidth(80)
         row2.addWidget(self._rule_type_combo)
         self._rule_replacement_edit = QLineEdit()
-        self._rule_replacement_edit.setPlaceholderText(
-            "Replacement (default: [CUSTOM_REDACTED])"
-        )
+        self._rule_replacement_edit.setPlaceholderText("Replacement (default: [CUSTOM_REDACTED])")
         row2.addWidget(self._rule_replacement_edit, 1)
         self._add_rule_btn = QPushButton("+ Add")
         self._add_rule_btn.setStyleSheet(_BTN_STYLE)
@@ -290,9 +286,7 @@ class ProfilesTab(QWidget):
             # Fallback: free-text input when no registry available
             self._denied_tools_edit = QPlainTextEdit()
             self._denied_tools_edit.setMaximumHeight(60)
-            self._denied_tools_edit.setPlaceholderText(
-                "One tool name per line (e.g. list_functions, read_bytes)"
-            )
+            self._denied_tools_edit.setPlaceholderText("One tool name per line (e.g. list_functions, read_bytes)")
             tools_lay.addWidget(self._denied_tools_edit)
 
         return tools_group
@@ -307,16 +301,12 @@ class ProfilesTab(QWidget):
 
         self._denied_funcs_edit = QPlainTextEdit()
         self._denied_funcs_edit.setMaximumHeight(48)
-        self._denied_funcs_edit.setPlaceholderText(
-            "One function name per line (binary-specific)"
-        )
+        self._denied_funcs_edit.setPlaceholderText("One function name per line (binary-specific)")
         adv_form.addRow("Denied Functions:", self._denied_funcs_edit)
 
         self._custom_filters_edit = QPlainTextEdit()
         self._custom_filters_edit.setMaximumHeight(48)
-        self._custom_filters_edit.setPlaceholderText(
-            "Custom prompt instructions (one per line)"
-        )
+        self._custom_filters_edit.setPlaceholderText("Custom prompt instructions (one per line)")
         adv_form.addRow("Prompt Filters:", self._custom_filters_edit)
 
         return adv_group
@@ -564,9 +554,7 @@ class ProfilesTab(QWidget):
 
         desc_edit = QPlainTextEdit()
         desc_edit.setMaximumHeight(60)
-        desc_edit.setPlaceholderText(
-            "Describe the profile's purpose (shown to the AI agent)"
-        )
+        desc_edit.setPlaceholderText("Describe the profile's purpose (shown to the AI agent)")
         form.addRow("Description:", desc_edit)
         lay.addLayout(form)
 
@@ -575,9 +563,7 @@ class ProfilesTab(QWidget):
         error_label.hide()
         lay.addWidget(error_label)
 
-        buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
-        )
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         lay.addWidget(buttons)
 
         def _validate():
@@ -588,9 +574,7 @@ class ProfilesTab(QWidget):
                 error_label.show()
                 return
             if not d:
-                error_label.setText(
-                    "Description is required \u2014 it helps the AI agent follow your constraints"
-                )
+                error_label.setText("Description is required \u2014 it helps the AI agent follow your constraints")
                 error_label.show()
                 return
             name_edit.setText(n)
@@ -614,10 +598,7 @@ class ProfilesTab(QWidget):
         self._save_current_to_working_copy()
         config.active_profile = self._profile_combo.currentText() or "default"
         config.custom_profiles = copy.deepcopy(self._custom_profiles)
-        log_debug(
-            f"Profiles config: active={config.active_profile}, "
-            f"{len(config.custom_profiles)} custom"
-        )
+        log_debug(f"Profiles config: active={config.active_profile}, {len(config.custom_profiles)} custom")
 
 
 def _text_to_lines(text: str) -> list[str]:

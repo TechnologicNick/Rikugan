@@ -127,9 +127,7 @@ class LLMProvider(ABC):
         get client -> build kwargs -> call API -> normalize response.
         """
         client = self._get_client()
-        kwargs = self._build_request_kwargs(
-            messages, tools, temperature, max_tokens, system
-        )
+        kwargs = self._build_request_kwargs(messages, tools, temperature, max_tokens, system)
         try:
             raw = self._call_api(client, kwargs)
         except Exception as e:
@@ -150,9 +148,7 @@ class LLMProvider(ABC):
         provider-specific streaming state machine.
         """
         client = self._get_client()
-        kwargs = self._build_request_kwargs(
-            messages, tools, temperature, max_tokens, system
-        )
+        kwargs = self._build_request_kwargs(messages, tools, temperature, max_tokens, system)
         yield from self._stream_chunks(client, kwargs)
 
     # -- Concrete shared implementations ---------------------------------------

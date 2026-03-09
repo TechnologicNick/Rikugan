@@ -27,7 +27,7 @@ jobs:
         run: python -m ruff format --check rikugan/
 
       - name: Lint
-        run: python -m ruff check rikugan/
+        run: python -m ruff check rikugan/  # config in pyproject.toml
 
   typecheck:
     name: Mypy
@@ -44,7 +44,7 @@ jobs:
         run: pip install mypy tomli
 
       - name: Type check (core + providers)
-        run: python -m mypy rikugan/core rikugan/providers
+        run: python -m mypy rikugan/core rikugan/providers  # config in pyproject.toml
 
   test:
     name: Pytest

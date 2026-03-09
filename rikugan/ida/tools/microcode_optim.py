@@ -113,12 +113,7 @@ def build_optimizer_namespace() -> dict[str, Any]:
     namespace = {"__builtins__": safe_builtins()}
     namespace["ida_hexrays"] = ida_hexrays
     for attr in dir(ida_hexrays):
-        if (
-            attr.startswith("m_")
-            or attr.startswith("mop_")
-            or attr.startswith("MMAT_")
-            or attr.startswith("BLT_")
-        ):
+        if attr.startswith("m_") or attr.startswith("mop_") or attr.startswith("MMAT_") or attr.startswith("BLT_"):
             namespace[attr] = getattr(ida_hexrays, attr)
     return namespace
 

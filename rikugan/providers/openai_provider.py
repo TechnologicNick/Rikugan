@@ -29,9 +29,7 @@ from .base import LLMProvider
 class OpenAIProvider(LLMProvider):
     """Adapter for the OpenAI Chat Completions API."""
 
-    def __init__(
-        self, api_key: str = "", api_base: str = "", model: str = "gpt-4o", **kwargs
-    ):
+    def __init__(self, api_key: str = "", api_base: str = "", model: str = "gpt-4o", **kwargs):
         api_key = api_key or os.environ.get("OPENAI_API_KEY", "")
         super().__init__(api_key=api_key, api_base=api_base, model=model)
 
@@ -106,9 +104,7 @@ class OpenAIProvider(LLMProvider):
     def _builtin_models() -> list[ModelInfo]:
         return [
             ModelInfo("gpt-4o", "GPT-4o", "openai", 128000, 16384, True, True),
-            ModelInfo(
-                "gpt-4o-mini", "GPT-4o Mini", "openai", 128000, 16384, True, True
-            ),
+            ModelInfo("gpt-4o-mini", "GPT-4o Mini", "openai", 128000, 16384, True, True),
             ModelInfo("o3-mini", "o3-mini", "openai", 200000, 100000, True, False),
         ]
 
@@ -263,24 +259,18 @@ class OpenAIProvider(LLMProvider):
                         if idx not in current_tool_calls:
                             current_tool_calls[idx] = {
                                 "id": tc_delta.id or "",
-                                "name": tc_delta.function.name
-                                if tc_delta.function and tc_delta.function.name
-                                else "",
+                                "name": tc_delta.function.name if tc_delta.function and tc_delta.function.name else "",
                                 "args": "",
                             }
                             if tc_delta.id:
                                 yield StreamChunk(
                                     tool_call_id=tc_delta.id,
-                                    tool_name=tc_delta.function.name
-                                    if tc_delta.function
-                                    else "",
+                                    tool_name=tc_delta.function.name if tc_delta.function else "",
                                     is_tool_call_start=True,
                                 )
 
                         if tc_delta.function and tc_delta.function.arguments:
-                            current_tool_calls[idx]["args"] += (
-                                tc_delta.function.arguments
-                            )
+                            current_tool_calls[idx]["args"] += tc_delta.function.arguments
                             yield StreamChunk(
                                 tool_call_id=current_tool_calls[idx]["id"],
                                 tool_name=current_tool_calls[idx]["name"],

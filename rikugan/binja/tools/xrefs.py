@@ -88,11 +88,7 @@ def xrefs_to(
     bv = require_bv()
     ea = parse_addr_like(address)
     target_name = resolve_name_at(bv, ea)
-    lines = [
-        f"Cross-references to 0x{ea:x}"
-        + (f" ({target_name})" if target_name else "")
-        + ":"
-    ]
+    lines = [f"Cross-references to 0x{ea:x}" + (f" ({target_name})" if target_name else "") + ":"]
 
     refs = list(_code_refs_to(bv, ea)) + list(_data_refs_to(bv, ea))
     refs.sort(key=lambda x: x[0])

@@ -200,9 +200,7 @@ def _run_phase2_plan(
 
     steps = _parse_plan(plan_text)
     if not steps:
-        yield TurnEvent.error_event(
-            "Failed to generate a valid modification plan from exploration findings."
-        )
+        yield TurnEvent.error_event("Failed to generate a valid modification plan from exploration findings.")
         return None
 
     yield TurnEvent.plan_generated(steps)
@@ -227,9 +225,7 @@ def _run_phase2_plan(
             regen_prompt += f" Their feedback: {decision.feedback}"
         regen_prompt += "\n\nPlease generate a revised modification plan."
         plan_prompt = PLAN_SYNTHESIS_PROMPT.format(knowledge_summary=knowledge_summary)
-        loop.session.add_message(
-            Message(role=Role.USER, content=regen_prompt + "\n\n" + plan_prompt)
-        )
+        loop.session.add_message(Message(role=Role.USER, content=regen_prompt + "\n\n" + plan_prompt))
 
         plan_text = yield from _generate_plan_turn()
         if plan_text is None:
@@ -245,9 +241,7 @@ def _run_phase2_plan(
         decision = parse_approval(loop._wait_for_queue(loop._user_answer_queue))
 
     state.transition_to(ExplorationPhase.EXECUTE)
-    yield TurnEvent.exploration_phase_change(
-        "plan", "execute", "Plan approved. Executing patches."
-    )
+    yield TurnEvent.exploration_phase_change("plan", "execute", "Plan approved. Executing patches.")
     from .plan import _persist_plan
 
     _persist_plan(loop, user_goal, steps)
@@ -267,8 +261,7 @@ def _run_phase3_execute(
         state.execute_turns += 1
         if state.execute_turns > state.max_execute_turns:
             yield TurnEvent.error_event(
-                f"Execute turn limit reached ({state.max_execute_turns}). "
-                "Some patches may not have been applied."
+                f"Execute turn limit reached ({state.max_execute_turns}). Some patches may not have been applied."
             )
             return False
 
@@ -290,9 +283,7 @@ def _run_phase3_execute(
             state.total_turns += 1
             yield TurnEvent.turn_start(state.total_turns)
 
-            result = yield from execute_single_turn(
-                loop, exploration_system, tools_schema
-            )
+            result = yield from execute_single_turn(loop, exploration_system, tools_schema)
 
             if not result.ok:
                 return False
@@ -313,9 +304,7 @@ def _run_phase4_save(
 ) -> Generator[TurnEvent, None, None]:
     """Phase 4: prompt the user to save or discard applied patches."""
     state.transition_to(ExplorationPhase.SAVE)
-    yield TurnEvent.exploration_phase_change(
-        "execute", "save", "All patches applied. Awaiting save decision."
-    )
+    yield TurnEvent.exploration_phase_change("execute", "save", "All patches applied. Awaiting save decision.")
 
     summary = PatchSummary(patches=list(state.patches_applied))
     summary.compute()
@@ -349,9 +338,7 @@ def _run_phase4_save(
                 ),
             )
         )
-        yield TurnEvent.save_completed(
-            len(state.patches_applied), summary.total_bytes_modified
-        )
+        yield TurnEvent.save_completed(len(state.patches_applied), summary.total_bytes_modified)
         log_info("Exploration mode: patches saved")
     else:
         rolled_back = False
@@ -367,9 +354,7 @@ def _run_phase4_save(
             ]
             if rollback_parts:
                 try:
-                    loop.tools.execute(
-                        "execute_python", {"code": "; ".join(rollback_parts)}
-                    )
+                    loop.tools.execute("execute_python", {"code": "; ".join(rollback_parts)})
                     rolled_back = True
                     log_info("Exploration mode: patches rolled back via execute_python")
                 except ToolError as e:
@@ -383,9 +368,7 @@ def _run_phase4_save(
         )
         loop.session.add_message(Message(role=Role.USER, content=discard_msg))
         yield TurnEvent.save_discarded(len(state.patches_applied), rolled_back)
-        log_info(
-            f"Exploration mode: patches discarded by user (rolled_back={rolled_back})"
-        )
+        log_info(f"Exploration mode: patches discarded by user (rolled_back={rolled_back})")
 
 
 def run_exploration_mode(
@@ -402,20 +385,14 @@ def run_exploration_mode(
     loop._exploration_state = state
 
     exploration_system = system_prompt + EXPLORATION_SYSTEM_ADDENDUM
-    log_info(
-        f"Exploration mode started: goal={user_message[:80]!r}, explore_only={explore_only}"
-    )
-    yield TurnEvent.exploration_phase_change(
-        "", "explore", f"Starting exploration: {user_message[:60]}"
-    )
+    log_info(f"Exploration mode started: goal={user_message[:80]!r}, explore_only={explore_only}")
+    yield TurnEvent.exploration_phase_change("", "explore", f"Starting exploration: {user_message[:60]}")
 
     # Phase 1: EXPLORE — subagent for /modify, inline for /explore
     if not explore_only:
         yield from _run_phase1_subagent(loop, state, user_message, exploration_system)
     else:
-        yield from _run_phase1_inline(
-            loop, state, exploration_system, tools_schema, explore_only
-        )
+        yield from _run_phase1_inline(loop, state, exploration_system, tools_schema, explore_only)
 
     if explore_only:
         summary = state.knowledge_base.to_summary()
@@ -423,10 +400,7 @@ def run_exploration_mode(
             loop.session.add_message(
                 Message(
                     role=Role.USER,
-                    content=(
-                        "[SYSTEM] Exploration complete. Here is a summary of findings:\n\n"
-                        + summary
-                    ),
+                    content=("[SYSTEM] Exploration complete. Here is a summary of findings:\n\n" + summary),
                 )
             )
         log_info("Exploration mode finished (explore-only)")
@@ -435,9 +409,7 @@ def run_exploration_mode(
 
     # Phase 2: PLAN
     if state.phase == ExplorationPhase.PLAN:
-        steps = yield from _run_phase2_plan(
-            loop, state, exploration_system, user_message
-        )
+        steps = yield from _run_phase2_plan(loop, state, exploration_system, user_message)
         if steps is None:
             loop._clear_exploration_state()
             return

@@ -143,9 +143,7 @@ class _AddProviderDialog(QDialog):
         self._error_label.hide()
         layout.addWidget(self._error_label)
 
-        buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
-        )
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         buttons.accepted.connect(self._validate)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
@@ -191,9 +189,7 @@ class SettingsDialog(QDialog):
         self._config = config
         self._tool_registry = tool_registry
         self._registry = registry or ProviderRegistry()
-        self._registry.register_custom_providers(
-            list(self._config.custom_providers.keys())
-        )
+        self._registry.register_custom_providers(list(self._config.custom_providers.keys()))
         self._fetcher = _ModelFetcher(self._registry)
         self._fetched_models: list[ModelInfo] = []
         self._resolved_token: str = ""
@@ -204,16 +200,12 @@ class SettingsDialog(QDialog):
         screen = QApplication.primaryScreen()
         if screen:
             avail = screen.availableGeometry()
-            self.resize(
-                min(int(avail.width() * 0.45), 900), min(int(avail.height() * 0.7), 800)
-            )
+            self.resize(min(int(avail.width() * 0.45), 900), min(int(avail.height() * 0.7), 800))
         else:
             self.resize(700, 600)
         self.setMinimumWidth(400)
         self._build_ui()
-        self._remove_provider_btn.setEnabled(
-            self._config.is_custom_provider(self._config.provider.name)
-        )
+        self._remove_provider_btn.setEnabled(self._config.is_custom_provider(self._config.provider.name))
 
         # Poll timer for fetcher results — NO cross-thread signals
         self._poll_timer = QTimer(self)
@@ -258,9 +250,7 @@ class SettingsDialog(QDialog):
 
         layout.addWidget(self._tabs)
 
-        self._button_box = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
-        )
+        self._button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         self._button_box.accepted.connect(self._on_accept)
         self._button_box.rejected.connect(self.reject)
         layout.addWidget(self._button_box)
@@ -381,9 +371,7 @@ class SettingsDialog(QDialog):
         behavior_group = QGroupBox("Behavior")
         behavior_form = QFormLayout(behavior_group)
 
-        self._auto_context_cb = QCheckBox(
-            "Auto-inject binary context into system prompt"
-        )
+        self._auto_context_cb = QCheckBox("Auto-inject binary context into system prompt")
         self._auto_context_cb.setChecked(self._config.auto_context)
         behavior_form.addRow(self._auto_context_cb)
 
@@ -409,13 +397,10 @@ class SettingsDialog(QDialog):
         )
         behavior_form.addRow("API retry attempts:", self._max_retries_spin)
 
-        self._silent_retry_cb = QCheckBox(
-            "Show loading indicator instead of error messages during retries"
-        )
+        self._silent_retry_cb = QCheckBox("Show loading indicator instead of error messages during retries")
         self._silent_retry_cb.setChecked(self._config.silent_retry_mode)
         self._silent_retry_cb.setToolTip(
-            "When enabled, rate-limit retries show a subtle text indicator "
-            "instead of red error messages."
+            "When enabled, rate-limit retries show a subtle text indicator instead of red error messages."
         )
         behavior_form.addRow(self._silent_retry_cb)
 
@@ -506,9 +491,7 @@ class SettingsDialog(QDialog):
 
         # Update placeholder
         if provider == "anthropic":
-            self._api_key_edit.setPlaceholderText(
-                "sk-... or leave empty for OAuth auto-detect"
-            )
+            self._api_key_edit.setPlaceholderText("sk-... or leave empty for OAuth auto-detect")
         elif provider == "ollama":
             self._api_key_edit.setPlaceholderText("Not required for local Ollama")
         elif provider in ("openai_compat",) or is_custom:
@@ -537,9 +520,7 @@ class SettingsDialog(QDialog):
         base = self._api_base_edit.text().strip()
 
         try:
-            provider = self._registry.create(
-                provider_name, api_key=explicit_key, api_base=base
-            )
+            provider = self._registry.create(provider_name, api_key=explicit_key, api_base=base)
             label, status_type = provider.auth_status()
             self._resolved_token = provider.api_key
         except Exception as e:
@@ -552,9 +533,7 @@ class SettingsDialog(QDialog):
             self._auth_status.setStyleSheet(self._OK_STYLE)
         elif status_type == "error":
             if provider_name == "anthropic":
-                self._auth_status.setText(
-                    "run claude setup-token to acquire your oauth"
-                )
+                self._auth_status.setText("run claude setup-token to acquire your oauth")
                 self._auth_status.setStyleSheet(self._HINT_STYLE)
             else:
                 self._auth_status.setText(label)
