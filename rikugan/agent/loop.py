@@ -417,6 +417,26 @@ class AgentLoop:
             self._last_knowledge_base = self._exploration_state.knowledge_base
             self._exploration_state = None
 
+    def _ensure_research_state(self) -> None:
+        """Lazily create a minimal ResearchState for continuation after cancel."""
+        if self._research_state is not None:
+            return
+        from .modes.research import ResearchState
+
+        idb_dir = os.path.dirname(self.session.idb_path) if self.session.idb_path else os.getcwd()
+        notes_dir = os.path.join(idb_dir, "notes")
+        os.makedirs(notes_dir, exist_ok=True)
+        self._research_state = ResearchState(
+            notes_dir=notes_dir,
+            max_explore_turns=self.config.exploration_turn_limit,
+        )
+
+    def _ensure_exploration_state(self) -> ExplorationState:
+        """Lazily create a minimal ExplorationState for continuation after cancel."""
+        if self._exploration_state is None:
+            self._exploration_state = ExplorationState(explore_only=True)
+        return self._exploration_state
+
     def cancel(self) -> None:
         """Cancel the current run."""
         self._cancelled.set()
@@ -1151,7 +1171,7 @@ class AgentLoop:
         from .modes.research import write_and_review_note
 
         state = self._research_state
-        assert state is not None  # caller checks _research_state is not None
+        assert state is not None  # caller ensures state via _ensure_research_state()
         genre = tc.arguments.get("genre", "general")
         title = tc.arguments.get("title", "untitled")
         content = tc.arguments.get("content", "")
@@ -1337,11 +1357,15 @@ class AgentLoop:
         for tc in tool_calls:
             self._check_cancelled()
             state = self._exploration_state
-            if tc.name == "research_note" and self._research_state is not None:
+            persisted = self.session.metadata.get("active_mode", "")
+            if tc.name == "research_note" and (self._research_state is not None or persisted == "research"):
+                self._ensure_research_state()
                 tr = yield from self._handle_research_note_tool(tc)
-            elif tc.name == "exploration_report" and state is not None:
+            elif tc.name == "exploration_report" and (state is not None or persisted in ("exploration", "research")):
+                state = self._ensure_exploration_state()
                 tr = yield from self._handle_exploration_report_tool(tc, state)
-            elif tc.name == "phase_transition" and state is not None:
+            elif tc.name == "phase_transition" and (state is not None or persisted in ("exploration", "research")):
+                state = self._ensure_exploration_state()
                 tr = yield from self._handle_phase_transition_tool(tc, state)
             elif tc.name == "save_memory":
                 tr = yield from self._handle_save_memory_tool(tc)
@@ -1360,6 +1384,14 @@ class AgentLoop:
         self, active_skill: Any, use_exploration_mode: bool, use_research_mode: bool = False
     ) -> list:
         """Build the full tool schema list for a run, including pseudo-tools."""
+        # Include pseudo-tools from a persisted mode so they remain available
+        # after cancel + continue (the LLM still sees mode context in history).
+        persisted_mode = self.session.metadata.get("active_mode", "")
+        if persisted_mode == "research":
+            use_research_mode = True
+        elif persisted_mode == "exploration":
+            use_exploration_mode = True
+
         tools_schema = list(self.tools.to_provider_format())
 
         # Filter to skill-allowed tools if the skill restricts them
@@ -1471,15 +1503,20 @@ class AgentLoop:
             log_debug(f"Agent run started: {len(tools_schema)} tools, msg={user_message[:80]!r}")
 
             if use_research_mode:
+                self.session.metadata["active_mode"] = "research"
                 yield from run_research_mode(
                     self,
                     user_message,
                     system_prompt,
                     tools_schema,
                 )
+                # Mode completed normally — clear so follow-ups don't
+                # keep re-including mode tools.
+                self.session.metadata.pop("active_mode", None)
                 return
 
             if use_exploration_mode:
+                self.session.metadata["active_mode"] = "exploration"
                 yield from run_exploration_mode(
                     self,
                     user_message,
@@ -1487,6 +1524,7 @@ class AgentLoop:
                     tools_schema,
                     explore_only=explore_only,
                 )
+                self.session.metadata.pop("active_mode", None)
                 return
 
             if use_plan_mode or self.plan_mode:
