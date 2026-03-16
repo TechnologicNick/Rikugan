@@ -7,7 +7,7 @@ import time
 from collections.abc import Generator
 from typing import TYPE_CHECKING, Any
 
-from ...core.errors import CancellationError, ProviderError
+from ...core.errors import ProviderError
 from ...core.logging import log_error, log_info
 from ...core.sanitize import sanitize_skill_body
 from ...core.types import Message, Role, UserDecision, parse_approval
@@ -59,9 +59,6 @@ def _generate_plan_text(
     yield TurnEvent.turn_start(1)
     try:
         plan_text, _, usage, _ = yield from loop._stream_llm_turn(system_prompt, None)
-    except CancellationError:
-        yield TurnEvent.cancelled_event()
-        return None
     except ProviderError as e:
         yield TurnEvent.error_event(loop._format_provider_error_for_user(e))
         return None

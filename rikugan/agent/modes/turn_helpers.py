@@ -6,7 +6,7 @@ from collections.abc import Generator
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
-from ...core.errors import CancellationError, ProviderError
+from ...core.errors import ProviderError
 from ...core.types import Message, Role, TokenUsage, ToolResult
 from ..turn import TurnEvent
 
@@ -69,9 +69,6 @@ def execute_single_turn(
             last_usage,
             raw_parts,
         ) = yield from loop._stream_llm_turn(system_prompt, tools_schema)
-    except CancellationError:
-        yield TurnEvent.cancelled_event()
-        return TurnResult(cancelled=True)
     except ProviderError as e:
         msg = loop._format_provider_error_for_user(e)
         yield TurnEvent.error_event(msg)
