@@ -445,7 +445,9 @@ def run_research_mode(
         tracker.enter("document")
         log_info("Research mode: entering note-writing phase")
         if not tracker.is_continuing("document"):
-            yield TurnEvent.exploration_phase_change("explore", "document", "Exploration complete. Writing research notes...")
+            yield TurnEvent.exploration_phase_change(
+                "explore", "document", "Exploration complete. Writing research notes..."
+            )
 
         yield from _run_note_writing_phase(loop, research_state, system_prompt, tools_schema)
 

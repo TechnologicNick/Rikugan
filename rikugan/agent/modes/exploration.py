@@ -394,7 +394,9 @@ def run_exploration_mode(
     loop._exploration_state = state
 
     exploration_system = system_prompt + EXPLORATION_SYSTEM_ADDENDUM
-    log_info(f"Exploration mode started: goal={user_message[:80]!r}, explore_only={explore_only}, resuming={tracker.is_resuming}")
+    log_info(
+        f"Exploration mode started: goal={user_message[:80]!r}, explore_only={explore_only}, resuming={tracker.is_resuming}"
+    )
 
     # ------------------------------------------------------------------
     # Phase 1: EXPLORE
