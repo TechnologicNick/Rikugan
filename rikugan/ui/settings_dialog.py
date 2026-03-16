@@ -404,6 +404,15 @@ class SettingsDialog(QDialog):
         )
         behavior_form.addRow(self._silent_retry_cb)
 
+        # --- Context preservation ---
+        self._preserve_context_cb = QCheckBox("Preserve full context (disable tool result truncation)")
+        self._preserve_context_cb.setChecked(self._config.preserve_context)
+        self._preserve_context_cb.setToolTip(
+            "Disables tool result truncation and message trimming. "
+            "Enable for deep RE sessions where losing decompilation context is worse than higher token cost."
+        )
+        behavior_form.addRow(self._preserve_context_cb)
+
         return behavior_group
 
     # --- Show event: defer all non-widget work to here ---
@@ -684,6 +693,7 @@ class SettingsDialog(QDialog):
         self._config.exploration_turn_limit = self._explore_turns_spin.value()
         self._config.max_retries = self._max_retries_spin.value()
         self._config.silent_retry_mode = self._silent_retry_cb.isChecked()
+        self._config.preserve_context = self._preserve_context_cb.isChecked()
 
         # Apply new tab settings
         self._skills_tab.apply_to_config(self._config)

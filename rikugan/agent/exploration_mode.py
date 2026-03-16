@@ -226,7 +226,7 @@ class ExplorationState:
     explore_turns: int = 0
     execute_turns: int = 0
     total_turns: int = 0  # monotonic counter across all phases (for UI)
-    max_explore_turns: int = 30
+    max_explore_turns: int = 100
     max_execute_turns: int = 20
     explore_only: bool = False  # /explore mode — no patching
 

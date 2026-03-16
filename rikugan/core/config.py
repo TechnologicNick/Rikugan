@@ -49,7 +49,7 @@ class RikuganConfig:
     plan_mode_default: bool = False
     checkpoint_auto_save: bool = True
     approve_mutations: bool = False  # require approval for mutating tools (rename, retype, etc.)
-    exploration_turn_limit: int = 30  # max turns in exploration phase before forcing transition
+    exploration_turn_limit: int = 100  # max turns in exploration phase before forcing transition
     max_retries: int = 3  # max retries on rate-limit / transient API errors
     silent_retry_mode: bool = False  # show loading indicator instead of error messages on retry
     theme: str = "dark"
@@ -66,6 +66,9 @@ class RikuganConfig:
     # A2A / external agents
     a2a_auto_discover: bool = True
     a2a_agents: list[dict[str, Any]] = field(default_factory=list)
+
+    # Context management
+    preserve_context: bool = False  # disable tool result truncation + context compaction
 
     # Bulk renamer defaults
     bulk_renamer_batch_size: int = 10

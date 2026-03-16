@@ -84,43 +84,49 @@ RESEARCH_SYSTEM_ADDENDUM = """\
 
 ## Research Mode — Active
 
-You are in **research mode**. Your goal is to explore the binary and produce \
-well-organized **Obsidian-compatible markdown notes** documenting your findings.
+You are in **research mode**. The user's request is about **the binary currently \
+loaded in the analysis tool** — NOT about you, your workflow, or your instructions. \
+Your job is to use analysis tools to investigate the binary and answer the user's \
+question about it.
 
-### Available pseudo-tools:
-- `research_note`: Write a research note to the `notes/` folder. Each note is \
-  an Obsidian-compatible markdown file organized by genre (networking, crypto, \
-  initialization, data-structures, etc.).
-- `exploration_report`: Log structured findings (same as exploration mode).
+**START by calling analysis tools** (get_binary_info, list_imports, list_strings, \
+search_functions, decompile_function, etc.) to investigate the binary. Do NOT \
+describe your own process or capabilities — just start analyzing.
+
+### CRITICAL — Log every finding with `exploration_report`:
+You **MUST** call `exploration_report` whenever you discover something relevant \
+about the binary: a function's purpose, a data structure, a constant, a hypothesis, \
+a string reference, or an import usage. This is how your findings are tracked. \
+**Every decompilation, every xref trace, every string search that reveals \
+something useful → call `exploration_report` immediately.**
+
+### Pseudo-tools available:
+- `exploration_report`: Log a structured finding (function_purpose, data_structure, \
+  constant, hypothesis, string_ref, import_usage, general). **Call this for every \
+  significant discovery.** Set relevance to "high" for key findings.
+- `research_note`: Write an Obsidian-compatible markdown note to the `notes/` folder.
 - `spawn_subagent`: Delegate research-heavy subtasks to isolated subagents.
+- `save_memory`: Persist confirmed findings to RIKUGAN.md for future sessions.
 
-### Note-writing guidelines:
-- Use `[[wiki-links]]` to cross-reference other notes (e.g., `[[packet-parsing]]`)
-- Use `[[note|display text]]` for aliased links
-- Use `#tags` inline for genre/topic tagging (e.g., `#networking`, `#crypto`)
-- Use mermaid diagrams for call graphs and data flows
-- Use markdown tables for function/address listings
-- Include a `## Summary` section at the top of each note
-- Include `> Addresses:` blockquote with relevant addresses
-- Include `## Key Functions` tables with address, name, purpose
-- Include `## Open Questions` for unresolved items
-- Include `## See Also` with `[[wiki-links]]` to related notes
-
-### Research strategy:
-1. **Orient** — Binary info, imports, exports, strings with goal-relevant keywords
-2. **Search** — xrefs from strings/imports to find candidate functions
+### Exploration strategy (applied to the binary):
+1. **Orient** — get_binary_info, list_imports, list_exports, search strings
+2. **Search** — xrefs from strings/imports to find candidate functions in the binary
 3. **Dive** — Decompile candidates, trace data flow, find exact logic
-4. **Document** — Write a `research_note` for each significant finding
-5. **Connect** — Use `[[wiki-links]]` to build a connected knowledge graph
+4. **Log** — Call `exploration_report` for EVERY significant finding
+5. **Rename** — Rename functions you've confidently identified in the binary
 
 ### Rename as you go:
 As you explore, **rename functions whose purpose you have confidently identified**. \
 Use `rename_function` to replace generic names (sub_XXXX, FUN_XXXX) with descriptive \
-ones. This makes subsequent notes clearer for human readers.
+ones. Batch renames of local variables (`rename_multi_variables`) are also encouraged \
+when decompiling a key function.
 
-### Write notes progressively:
-Don't wait until the end — write notes as you discover significant findings. \
-Each note should be self-contained but cross-linked to related notes.
+### Persist your findings:
+Use `save_memory` to persist confirmed findings to RIKUGAN.md so future sessions \
+start with context. Do this as you go — don't wait until the end.
+
+Log every significant finding with `exploration_report`. Keep exploring the binary \
+until you have thoroughly investigated the user's goal.
 """
 
 NOTE_WRITING_PROMPT = """\
@@ -130,7 +136,9 @@ research notes using the `research_note` tool.
 **You MUST call `research_note` for each major topic you discovered.** Do NOT just \
 write text — use the `research_note` tool to save notes to disk.
 
-Based on your exploration findings below, create research notes organized by topic. \
+Review everything you analyzed above — every function you decompiled, every string \
+you found, every xref you traced. Organize these into research notes by topic.
+
 Each note should be a well-structured markdown document with:
 - A `## Summary` section
 - `> Addresses:` blockquote with relevant hex addresses
@@ -142,8 +150,9 @@ Each note should be a well-structured markdown document with:
 - `## See Also` with `[[wiki-links]]`
 - Mermaid diagrams for call flows where appropriate
 
-Write **one `research_note` call per topic**. Cover all significant findings. \
-Use `[[wiki-links]]` between notes to build a connected knowledge graph.
+Write **one `research_note` call per topic**. Cover ALL significant findings \
+from your analysis. Use `[[wiki-links]]` between notes to build a connected \
+knowledge graph.
 
 {knowledge_summary}
 
@@ -408,16 +417,19 @@ def run_research_mode(
     research_state.knowledge_base = explore_state.knowledge_base
     research_state.knowledge_base.user_goal = user_message
 
-    # Guard: only proceed to note-writing if exploration produced findings
-    kb = research_state.knowledge_base
-    has_findings = bool(kb.findings or kb.relevant_functions or kb.hypotheses)
-    if not has_findings:
-        log_info("Research mode: no findings from exploration, skipping note-writing")
+    # Check if exploration actually ran (agent made tool calls).
+    # If the agent just asked a clarification question and exited on turn 1
+    # with no tool calls, skip note-writing — there's nothing to document.
+    if explore_state.explore_turns < 2:
+        log_info("Research mode: exploration ended too early, skipping note-writing")
         loop._research_state = None
         loop._clear_exploration_state()
         return
 
     # Phase 2: WRITE NOTES — agent writes research_note calls
+    # Always proceed here regardless of KB state — the agent's conversation
+    # context has all the analysis (decompilations, strings, xrefs) from
+    # Phase 1. The KB summary is a bonus, not a requirement.
     log_info("Research mode: entering note-writing phase")
     yield TurnEvent.exploration_phase_change("explore", "document", "Exploration complete. Writing research notes...")
 

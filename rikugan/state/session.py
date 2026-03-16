@@ -124,22 +124,32 @@ class SessionState:
             self.messages[:] = head + tail
             return removed
 
-    def get_messages_for_provider(self, context_window: int = 0) -> list[Message]:
+    def get_messages_for_provider(
+        self,
+        context_window: int = 0,
+        preserve_context: bool = False,
+    ) -> list[Message]:
         """Return messages sanitized and trimmed for the provider API.
 
         1. Ensures every tool_use has a matching tool_result.
         2. Strips injection markers from assistant output (anti self-injection).
-        3. Truncates old / large tool results.
+        3. Truncates old / large tool results (skipped when *preserve_context*).
         4. Drops oldest messages if the estimated token count exceeds
-           the context window budget.
+           the context window budget (skipped when *preserve_context*).
+
+        When *preserve_context* is True, only safety sanitization is applied —
+        no tool result truncation or message trimming.  This preserves full
+        decompilation output and analysis context at the cost of higher token
+        usage.
         """
         with self._lock:
             snapshot = list(self.messages)
         sanitized = self._sanitize(snapshot)
         sanitized = self._sanitize_assistant_output(sanitized)
-        sanitized = self._truncate_results(sanitized)
-        if context_window > 0:
-            sanitized = self._trim_to_budget(sanitized, context_window)
+        if not preserve_context:
+            sanitized = self._truncate_results(sanitized)
+            if context_window > 0:
+                sanitized = self._trim_to_budget(sanitized, context_window)
         return sanitized
 
     # --- Internal helpers ---

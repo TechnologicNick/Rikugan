@@ -780,6 +780,8 @@ class AgentLoop:
 
     def _prepare_provider_messages(self, system_prompt: str) -> tuple[list, int, TokenUsage | None]:
         """Estimate tokens, compact context if needed, return (provider_messages, estimated_tokens, estimated_usage)."""
+        preserve = self.config.preserve_context
+
         # Fast path: use running token counter to skip expensive O(n)
         # estimation when we're clearly below the compaction threshold.
         fast_estimate = self.session.token_estimate
@@ -807,7 +809,12 @@ class AgentLoop:
                 )
 
         ctx_window = self.config.provider.context_window
-        provider_messages = minify_messages(self.session.get_messages_for_provider(context_window=ctx_window))
+        provider_messages = minify_messages(
+            self.session.get_messages_for_provider(
+                context_window=ctx_window,
+                preserve_context=preserve,
+            )
+        )
         estimated_prompt_tokens = self._estimate_prompt_tokens(provider_messages, system_prompt)
         estimated_usage: TokenUsage | None = None
         if estimated_prompt_tokens > 0:
