@@ -9,5 +9,8 @@ mcp>=1.0.0
 # TOML parsing (stdlib tomllib backport for Python <3.11, e.g. IDA Pro 9.x)
 tomli>=2.0.0
 
+# API key encryption (optional, auto-detected at runtime)
+cryptography>=43.0.0
+
 # IDA Pro deobfuscation skill (optional, IDA only)
 ida-domain>=0.1.0
