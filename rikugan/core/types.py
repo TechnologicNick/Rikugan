@@ -144,6 +144,7 @@ class ProviderCapabilities:
     max_output_tokens: int = 4096
     supports_system_prompt: bool = True
     supports_cache_control: bool = False
+    native_turn_protocol: bool = False
 
 
 @dataclass

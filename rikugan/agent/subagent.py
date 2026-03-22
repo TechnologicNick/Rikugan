@@ -83,8 +83,17 @@ class SubagentRunner:
 
         session = SessionState()
         self._last_session = session
-        loop = AgentLoop(
-            provider=self.provider,
+        provider = self.provider
+        loop_cls = AgentLoop
+        if getattr(getattr(self.provider, "capabilities", None), "native_turn_protocol", False):
+            from ..providers.codex_app_server import CodexAppServerProvider
+            from .codex_loop import AppServerAgentLoop
+
+            provider = CodexAppServerProvider(model=self.provider.model)
+            loop_cls = AppServerAgentLoop
+
+        loop = loop_cls(
+            provider=provider,
             tool_registry=self.tools,
             config=self.config,
             session=session,

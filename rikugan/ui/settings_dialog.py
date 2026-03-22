@@ -108,6 +108,7 @@ class _ModelFetcher:
 
 _BUILTIN_PROVIDERS = [
     "anthropic",
+    "codex_app_server",
     "openai",
     "gemini",
     "ollama",
@@ -525,16 +526,26 @@ class SettingsDialog(QDialog):
 
         # OAuth checkbox only visible for Anthropic
         self._oauth_cb.setVisible(provider == "anthropic")
+        is_codex_provider = provider == "codex_app_server"
+        self._api_key_edit.setEnabled(not is_codex_provider)
+        self._api_base_edit.setEnabled(not is_codex_provider)
 
         # Update placeholder
         if provider == "anthropic":
             self._api_key_edit.setPlaceholderText("sk-... or leave empty for OAuth auto-detect")
+        elif is_codex_provider:
+            self._api_key_edit.setPlaceholderText("Managed by `codex login`")
         elif provider == "ollama":
             self._api_key_edit.setPlaceholderText("Not required for local Ollama")
         elif provider in ("openai_compat",) or is_custom:
             self._api_key_edit.setPlaceholderText("API key for the endpoint")
         else:
             self._api_key_edit.setPlaceholderText("API key")
+
+        if is_codex_provider:
+            self._api_base_edit.setPlaceholderText("Managed by local Codex app-server")
+        else:
+            self._api_base_edit.setPlaceholderText("Custom endpoint URL (optional)")
 
         self._update_auth_status()
         self._fetch_models()

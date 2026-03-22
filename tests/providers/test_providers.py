@@ -74,6 +74,7 @@ class TestProviderRegistry(unittest.TestCase):
         reg = ProviderRegistry()
         providers = reg.list_providers()
         self.assertIn("anthropic", providers)
+        self.assertIn("codex_app_server", providers)
         self.assertIn("openai", providers)
         self.assertIn("gemini", providers)
         self.assertIn("ollama", providers)

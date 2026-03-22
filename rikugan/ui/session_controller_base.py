@@ -10,6 +10,7 @@ import uuid
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
+from ..agent.codex_loop import AppServerAgentLoop
 from ..agent.loop import AgentLoop, BackgroundAgentRunner
 from ..agent.turn import TurnEvent
 from ..core.config import RikuganConfig
@@ -167,6 +168,21 @@ class SessionControllerBase:
         forked.current_turn = source.current_turn
         forked.metadata = dict(source.metadata)
         forked.metadata["forked_from"] = source.id
+        if (
+            self.config.provider.name == "codex_app_server"
+            and source.metadata.get("codex_thread_id")
+        ):
+            try:
+                provider = self._provider_registry.get_or_create(
+                    self.config.provider.name,
+                    api_key=self.config.provider.api_key,
+                    api_base=self.config.provider.api_base,
+                    model=self.config.provider.model,
+                )
+                if hasattr(provider, "fork_thread"):
+                    forked.metadata["codex_thread_id"] = provider.fork_thread(source.metadata["codex_thread_id"])
+            except Exception as e:
+                log_debug(f"Codex thread fork failed, preserving copied metadata: {e}")
         self._sessions[new_tab_id] = forked
         log_info(f"Forked session {source.id} → new tab {new_tab_id}")
         return new_tab_id
@@ -286,7 +302,8 @@ class SessionControllerBase:
             log_error(f"Provider creation failed: {e}")
             return f"Provider error: {e}"
 
-        loop = AgentLoop(
+        loop_cls = AppServerAgentLoop if provider.capabilities.native_turn_protocol else AgentLoop
+        loop = loop_cls(
             provider,
             self._tool_registry,
             self.config,
@@ -456,3 +473,4 @@ class SessionControllerBase:
                 except (OSError, ValueError) as e:
                     log_error(f"Failed to save session {tab_id} on shutdown: {e}")
         self._mcp_manager.shutdown()
+        self._provider_registry.shutdown()

@@ -7,6 +7,7 @@ from typing import Any
 from ..core.errors import ProviderError
 from .anthropic_provider import AnthropicProvider
 from .base import LLMProvider
+from .codex_app_server import CodexAppServerProvider
 from .gemini_provider import GeminiProvider
 from .minimax_provider import MiniMaxProvider
 from .ollama_provider import OllamaProvider
@@ -15,6 +16,7 @@ from .openai_provider import OpenAIProvider
 
 _BUILTIN_PROVIDERS: dict[str, type[LLMProvider]] = {
     "anthropic": AnthropicProvider,
+    "codex_app_server": CodexAppServerProvider,
     "openai": OpenAIProvider,
     "openai_compat": OpenAICompatProvider,
     "gemini": GeminiProvider,
@@ -59,6 +61,13 @@ class ProviderRegistry:
         if cls is OpenAICompatProvider and name != "openai_compat":
             kwargs.setdefault("provider_name", name)
 
+        old = self._instances.get(name)
+        if old is not None and hasattr(old, "close"):
+            try:
+                old.close()
+            except Exception:
+                pass
+
         instance = cls(api_key=api_key, api_base=api_base, model=model, **kwargs)
         self._instances[name] = instance
         return instance
@@ -88,3 +97,12 @@ class ProviderRegistry:
 
     def get_instance(self, name: str) -> LLMProvider | None:
         return self._instances.get(name)
+
+    def shutdown(self) -> None:
+        for instance in list(self._instances.values()):
+            if hasattr(instance, "close"):
+                try:
+                    instance.close()
+                except Exception:
+                    pass
+        self._instances.clear()
