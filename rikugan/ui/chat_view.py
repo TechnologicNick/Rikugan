@@ -266,6 +266,9 @@ class ChatView(QScrollArea):
         etype = event.type
         if etype == TurnEventType.TOOL_CALL_START:
             self._hide_thinking()
+            # A tool call splits assistant text into separate bubbles:
+            # text before the tool stays above it, and later text starts fresh below it.
+            self._current_assistant = None
             tw = ToolCallWidget(event.tool_name, event.tool_call_id)
             self._tool_widgets[event.tool_call_id] = tw
             self._register_tool_widget(event.tool_name, event.tool_call_id, tw)

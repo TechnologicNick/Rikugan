@@ -10,22 +10,11 @@ from unittest.mock import MagicMock
 from tests.qt_stubs import ensure_pyside6_stubs
 ensure_pyside6_stubs()
 
-# Stub all heavy submodules that chat_view imports
-for _mod_name in [
-    "rikugan.agent.turn",
-    "rikugan.core.types",
-]:
-    if _mod_name not in sys.modules:
-        _stub = types.ModuleType(_mod_name)
-        # Add commonly-needed attrs
-        for _attr in [
-            "PlanView", "TurnEvent",
-            "TurnEventType", "Message", "Role",
-        ]:
-            setattr(_stub, _attr, MagicMock())
-        sys.modules[_mod_name] = _stub
+# Force import of the real chat_view module under Qt stubs.
+sys.modules.pop("rikugan.ui.chat_view", None)
 
-from rikugan.ui.chat_view import _is_hidden_system_user_message, _TOOL_GROUP_MIN_CALLS  # noqa: E402
+from rikugan.ui import chat_view as chat_view_mod  # noqa: E402
+from rikugan.ui.chat_view import ChatView, _is_hidden_system_user_message, _TOOL_GROUP_MIN_CALLS  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
@@ -68,6 +57,33 @@ class TestChatViewConstants(unittest.TestCase):
 
     def test_tool_group_min_calls_value(self):
         self.assertEqual(_TOOL_GROUP_MIN_CALLS, 2)
+
+
+class TestChatViewToolBoundaries(unittest.TestCase):
+    def test_tool_call_start_clears_current_assistant(self):
+        view = object.__new__(ChatView)
+        view._current_assistant = MagicMock()
+        view._tool_widgets = {}
+        view._register_tool_widget = MagicMock()
+        view._scroll_to_bottom = MagicMock()
+        view._hide_thinking = MagicMock()
+
+        tool_widget = MagicMock()
+        original = chat_view_mod.ToolCallWidget
+        chat_view_mod.ToolCallWidget = MagicMock(return_value=tool_widget)
+        try:
+            event = types.SimpleNamespace(
+                type=chat_view_mod.TurnEventType.TOOL_CALL_START,
+                tool_name="echo_text",
+                tool_call_id="call_1",
+            )
+            ChatView._handle_tool_event(view, event)
+        finally:
+            chat_view_mod.ToolCallWidget = original
+
+        self.assertIsNone(view._current_assistant)
+        self.assertIs(view._tool_widgets["call_1"], tool_widget)
+        view._register_tool_widget.assert_called_once_with("echo_text", "call_1", tool_widget)
 
 
 if __name__ == "__main__":
